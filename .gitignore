@@ -1,0 +1,9 @@
+.idea
+.DS_Store
+.vscode
+.nyc_output
+npm-debug.log
+/node_modules
+static
+yarn.lock
+package-lock.json
