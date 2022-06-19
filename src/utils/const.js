@@ -1,4 +1,3 @@
-
 const OCTOPUS_CONFIG_FILE = 'otp-config.json';
 
 const PROJECT_CONFIG = {
@@ -28,13 +27,14 @@ const PROJECT_CONFIG = {
     ['en-US']: 'en',
     ['en_US']: 'en'
   },
-  zhIndexFile: `import common from './common';
-export default Object.assign({}, {
-  common
+  zhIndexFile: `const common = require('./common');
+
+module.exports = Object.assign({}, {
+    common
 });`,
-  zhTestFile: `export default {
+  zhTestFile: `module.exports = {
     test: '测试'
-  }`
+}`
 };
 
 module.exports = {
