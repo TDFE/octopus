@@ -2,12 +2,13 @@
  * @author linhuiw
  * @desc 工具方法
  */
- const fs = require("fs");
- const path = require("path");
- const _ = require("lodash");
- const inquirer = require("inquirer");
- const { pinyin } = require("pinyin-pro");
- const { PROJECT_CONFIG, OCTOPUS_CONFIG_FILE } = require("./const");
+const fs = require("fs");
+const path = require("path");
+const _ = require("lodash");
+const inquirer = require("inquirer");
+const { pinyin } = require("pinyin-pro");
+const ora = require('ora');
+const { PROJECT_CONFIG, OCTOPUS_CONFIG_FILE } = require("./const");
 
 const colors = require('colors');
 
@@ -87,7 +88,7 @@ function traverse(obj, cb) {
 /**
  * 获取所有文案
  */
-function getAllMessages(lang, filter = {message, key}) {
+function getAllMessages(lang, filter = { message, key }) {
   const srcLangDir = getLangDir(lang);
   let files = fs.readdirSync(srcLangDir);
   files = files.filter(file => file.endsWith('.ts') && file !== 'index.ts').map(file => path.resolve(srcLangDir, file));
@@ -273,6 +274,22 @@ async function getTranslateOriginType() {
   };
 }
 
+/**
+ * 进度条加载
+ * @param text
+ * @param callback
+ */
+function spining(text, callback) {
+  const spinner = ora(`${text}中...`).start();
+  if (callback) {
+    if (callback() !== false) {
+      spinner.succeed(`${text}成功`);
+    } else {
+      spinner.fail(`${text}失败`);
+    }
+  }
+}
+
 module.exports = {
   getKiwiDir,
   getLangDir,
@@ -287,5 +304,6 @@ module.exports = {
   flatten,
   lookForFiles,
   getTranslateOriginType,
-  translateKeyText
+  translateKeyText,
+  spining
 };
