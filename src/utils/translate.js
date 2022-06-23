@@ -172,7 +172,7 @@ function getDistRst(adjustLangObj) {
  * @param {*} addList 需要翻译的列表
  * @param {*} path 生成的路径
  */
-function generateExcel(addList, path) {
+function generateExcel(addList, path, lang) {
     const excleData = [['需要翻译的字段', '中文', '人工翻译'], ...addList];
 
     const options = {
@@ -184,7 +184,7 @@ function generateExcel(addList, path) {
 
     const workbook = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(workbook, worksheet, 'Sheet1');
-    XLSX.writeFile(workbook, `${path}/翻译.xlsx`);
+    XLSX.writeFile(workbook, `${path}/translate_${lang}.xlsx`);
 }
 
 /**

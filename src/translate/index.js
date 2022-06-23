@@ -16,12 +16,11 @@ const {
     rewriteFiles
 } = require('../utils/translate');
 
-const zhCN = require(otpPath + '/zh-CN');
-
-const zhCNflat = flatObject(zhCN);
-
 // 同步不同的语言包
 function translate() {
+    const zhCN = require(otpPath + '/zh-CN');
+    const zhCNflat = flatObject(zhCN);
+
     const otpConfig = fs.readFileSync(path.resolve(otpPath + '/../otp-config.json'), 'utf-8')
     const distLang = otpConfig && JSON.parse(otpConfig) && JSON.parse(otpConfig).distLangs
 
@@ -40,7 +39,7 @@ function translate() {
         // 重写文件
         rewriteFiles(fileKeyValueList, lang);
         // 生成excel
-        generateExcel(addList, otpPath + '/' + lang);
+        generateExcel(addList, otpPath + '/' + lang, lang);
     });
 }
 

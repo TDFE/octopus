@@ -1,4 +1,3 @@
-#!/usr/bin / env node
 const { translate } = require('../src/translate');
 
 exports.command = 'translate';

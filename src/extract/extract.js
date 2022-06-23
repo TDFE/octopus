@@ -37,7 +37,15 @@ function findAllChineseText(dir) {
     files = removeLangsFiles(dir.split(','));
   }
   const filterFiles = files.filter(file => {
-    return (isFile(file) && !file.endsWith('.less') && !file.endsWith('.svg') && !file.endsWith('.css') && !file.endsWith('.scss'));
+    let flag = false;
+    for (let index = 0; index < CONFIG.fileSuffix.length; index++) {
+      const element = CONFIG.fileSuffix[index];
+      flag  = file.endsWith(element);
+      if (flag) {
+        break;
+      }
+    }
+    return (isFile(file) && flag);
   });
   const allTexts = filterFiles.reduce((pre, file) => {
     const code = readFile(file);
@@ -205,7 +213,7 @@ function extractAll({ dirPath, prefix, proType }) {
     }, []);
     const len = item.texts.length - targetStrs.length;
     if (len > 0) {
-      console.log(`存在 ${highlightText(len)} 处文案无法替换，请避免在模板字符串的变量中嵌套中文`);
+      failInfo(`存在 ${highlightText(len)} 处文案无法替换，请避免在模板字符串的变量中嵌套中文`);
     }
 
     let translateTexts;
@@ -213,7 +221,6 @@ function extractAll({ dirPath, prefix, proType }) {
     if (origin !== 'Google') {
       // 翻译中文文案，百度和pinyin将文案进行拼接统一翻译
       const delimiter = origin === 'Baidu' ? '\n' : '$';
-      console.log('======', targetStrs, '=========')
       const translateOriginTexts = targetStrs.reduce((prev, curr, i) => {
         const transOriginText = getTransOriginText(curr.text);
         if (i === 0) {

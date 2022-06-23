@@ -2,9 +2,10 @@
 
 const checkUpdate = require('../src/lib/update');
 
-checkUpdate()
+const curTime = new Date();
+const year = curTime.getFullYear();
 
-const fs = require("fs");
+checkUpdate()
 
 const pkg = require('../package');
 const argv = require('yargs')
@@ -15,5 +16,5 @@ const argv = require('yargs')
     .alias('v', 'version')
     .help()
     .alias('h', 'help')
-    .epilog('copyright 2020 Anthony Li')
+    .epilog(`copyright ${year} 同盾`)
     .argv;

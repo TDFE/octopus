@@ -1,4 +1,3 @@
-#!/usr/bin/env node
 const { initProject } = require('../src/init');
 const inquirer = require('inquirer');
 const { spining } = require('../src/utils')

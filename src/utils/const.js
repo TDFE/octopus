@@ -18,6 +18,7 @@ const PROJECT_CONFIG = {
       concurrentLimit: 10,
       requestOptions: {}
     },
+    fileSuffix: ['.ts', '.js', '.vue', '.jsx', '.tsx'], //默认只提取当前后缀名
     defaultTranslateKeyApi: 'Pinyin', // 批量提取文案时生成key值时的默认翻译源
     importI18N: `import I18N from 'src/utils/I18N';`,
     ignoreDir: '',
@@ -27,12 +28,12 @@ const PROJECT_CONFIG = {
     ['en-US']: 'en',
     ['en_US']: 'en'
   },
-  zhIndexFile: `const common = require('./common');
+  zhIndexFile: `import common from './common';
 
-module.exports = Object.assign({}, {
+  export default Object.assign({}, {
     common
-});`,
-  zhTestFile: `module.exports = {
+  });`,
+  zhTestFile: `export default {
     test: '测试'
 }`
 };

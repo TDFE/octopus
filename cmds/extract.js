@@ -9,7 +9,6 @@ exports.command = 'extract <dirPath> [prefix]';
 exports.describe = 'extract <dirPath> [prefix] 一键批量替换指定文件夹下的所有文案';
 
 exports.handler = async (argv) => {
-    console.log(argv)
     if (argv.prefix) {
         console.log('请指定翻译后文案 key 值的前缀 extract src xxx');
     }

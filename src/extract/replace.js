@@ -61,10 +61,11 @@ function updateLangFiles(keyValue, text, validateDuplicate, proType) {
 function prettierFile(fileContent, proType) {
   try {
     return prettier.format(fileContent, {
-      parser: proType === 'react' ? 'flow' : proType,
+      parser: proType === 'vue' ? 'vue' : 'typescript',
       trailingComma: 'all',
       singleQuote: true
     });
+    // return fileContent;
   } catch (e) {
     failInfo(`代码格式化报错！${e.toString()}\n代码为：${fileContent}`);
     return fileContent;
