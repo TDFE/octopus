@@ -7,3 +7,4 @@ npm-debug.log
 static
 yarn.lock
 package-lock.json
+/src/translate/temp
