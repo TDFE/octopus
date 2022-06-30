@@ -21,5 +21,5 @@ module.exports = async () => {
     );
     const filelist = getNeedChangeNameFileList(path.resolve(__dirname, '../temp'), '.js')
 
-    changeFileSuffix(filelist, '.js', '.ts')
+    await changeFileSuffix(filelist, '.js', '.ts')
 }
