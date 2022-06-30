@@ -184,7 +184,7 @@ function generateExcel(addList, path, lang) {
 
     const workbook = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(workbook, worksheet, 'Sheet1');
-    XLSX.writeFile(workbook, `${path}/translate_${lang}.xlsx`);
+    XLSX.writeFile(workbook, `${path}/translate_${lang}.xls`);
 }
 
 /**
@@ -194,7 +194,7 @@ function generateExcel(addList, path, lang) {
  */
 function parseExcel(path, callback) {
     if (!shell.test('-e', path)) {
-        console.log('当前目录下没有找到翻译.xlsx文件');
+        console.log('当前目录下没有找到翻译.xls文件');
         return;
     }
     const excelBinary = fs.readFileSync(path);

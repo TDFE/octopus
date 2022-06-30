@@ -40,7 +40,7 @@ function excel(str) {
         const arr = list || distLang
 
         arr.forEach((lang) => {
-            parseExcel(otpPath + `/${lang}/translate_${lang}.xlsx`, function (translateMap) {
+            parseExcel(otpPath + `/${lang}/translate_${lang}.xls`, function (translateMap) {
                 const { default: currentLangMap } = require(`../temp/${lang}`);
                 const langFlat = flatObject(currentLangMap);
 
