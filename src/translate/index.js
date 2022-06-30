@@ -3,7 +3,7 @@
  * @Author: 郑泳健
  * @Date: 2022-06-01 13:56:18
  * @LastEditors: 郑泳健
- * @LastEditTime: 2022-06-30 18:51:54
+ * @LastEditTime: 2022-06-30 20:20:06
  */
 const fs = require('fs');
 const path = require('path');
@@ -21,19 +21,18 @@ const syncLang = require('../utils/syncLang')
 // 同步不同的语言包
 function translate() {
     (async () => {
-        await syncLang();
-        const { default: zhCN } = require('../temp/zh-CN');
-        const zhCNflat = flatObject(zhCN);
-
         const otpConfig = getProjectConfig()
         const distLang = otpConfig && otpConfig.distLangs
+        await syncFiles(distLang);
+        await syncLang();
+
+        const { default: zhCN } = require('../temp/zh-CN');
+        const zhCNflat = flatObject(zhCN);
 
         if (!Array.isArray(distLang)) {
             console.log('请配置otp-config.json里面的distLangs')
             return;
         }
-
-        await syncFiles(distLang);
 
         distLang.forEach((lang) => {
             const { default: currentLangMap } = require(`../temp/${lang}`);
