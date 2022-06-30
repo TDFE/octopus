@@ -3,7 +3,7 @@
  * @Author: 郑泳健
  * @Date: 2022-06-02 10:09:01
  * @LastEditors: 郑泳健
- * @LastEditTime: 2022-06-19 18:42:59
+ * @LastEditTime: 2022-06-26 17:32:33
  */
 const fs = require('fs');
 const path = require('path');
@@ -44,35 +44,35 @@ function traverse(obj, cb) {
  * 同步文件,删除多余的文件，增加没有的文件
  * @param {*} distLangs 目录名 []
  */
-function syncFiles(distLangs = []) {
+async function syncFiles(distLangs = []) {
     const zhCNPath = otpPath + '/zh-CN';
     const files = shell.ls('-A', zhCNPath);
 
-    distLangs.forEach((lang) => {
+    for (const lang of distLangs) {
         const currentLangPath = otpPath + '/' + lang;
         // 如果目录不存在就全部复制过去
         if (!shell.test('-e', currentLangPath)) {
-            shell.cp('-R', zhCNPath, currentLangPath);
+            await shell.cp('-R', zhCNPath, currentLangPath);
         } else {
-            const currentDirFiles = shell.ls('-A', currentLangPath);
+            const currentDirFiles = await shell.ls('-A', currentLangPath);
 
             // 删除多余的文件
-            currentDirFiles.forEach((i) => {
+            for (const i of currentDirFiles) {
                 if (!files.includes(i)) {
-                    shell.rm('-rf', currentLangPath + '/' + i);
+                    await shell.rm('-rf', currentLangPath + '/' + i);
                 }
-            });
+            }
 
             // 增加没有的文件
-            files.forEach((i) => {
+            for (const i of files) {
                 if (!currentDirFiles.includes(i)) {
                     shell.touch(currentLangPath + '/' + i);
                 }
-            });
+            }
         }
         // 直接复制index.js到对应的语种目录下
-        shell.cp('-R', zhCNPath + '/index.js', currentLangPath + '/index.js');
-    });
+        await shell.cp('-R', zhCNPath + '/index.js', currentLangPath + '/index.js');
+    }
 }
 
 /**
@@ -230,10 +230,49 @@ function rewriteFiles(fileKeyValueList, lang) {
     if (Array.isArray(fileKeyValueList) && fileKeyValueList.length) {
         fileKeyValueList.forEach(({ fileName, value }) => {
             const distRst = getDistRst(value);
-            fs.writeFileSync(`${otpPath}/${lang}/${fileName}.js`, 'module.exports =' + JSON.stringify(distRst, null, 4));
+            fs.writeFileSync(`${otpPath}/${lang}/${fileName}.js`, 'export default ' + JSON.stringify(distRst, null, 4));
         });
     }
 }
+
+/**
+ * 动态修改文件名
+ * @param {*} filelist 需要修改后缀的文件列表, 每一项都不带后缀 string[]
+ * @param {*} originSuffix 原后缀
+ * @param {*} changedSuffix 新后缀
+ */
+function changeFileSuffix(filelist, originSuffix, changedSuffix) {
+    return Promise.all(filelist.map((fileName) => {
+        console.log(fileName)
+        fs.renameSync(fileName + originSuffix, fileName + changedSuffix)
+    }));
+}
+
+/**
+ * 递归获取所有要修改名字的目录
+ * @param {*} path 要翻译的目录
+ * @param {*} originSuffix 要翻译的文件原后缀
+ * @param {*} fileList 返回哪些文件要修改后缀
+ * @returns
+ */
+function getNeedChangeNameFileList(path, originSuffix, fileList = []) {
+    const files = fs.readdirSync(path);
+
+    files.forEach(function (file) {
+        const stat = fs.statSync(path + '/' + file);
+        if (stat.isDirectory()) {
+            getNeedChangeNameFileList(path + '/' + file, originSuffix, fileList);
+        }
+        if (stat.isFile() && file.endsWith(originSuffix)) {
+            // 去掉文件后缀，因为后面还要转回来
+            const filename = file.substring(0, file.lastIndexOf('.'));
+            fileList.push(`${path}/${filename}`);
+        }
+    });
+
+    return fileList;
+}
+
 
 module.exports = {
     isObj,
@@ -246,5 +285,7 @@ module.exports = {
     getDistRst,
     generateExcel,
     parseExcel,
-    rewriteFiles
+    rewriteFiles,
+    changeFileSuffix,
+    getNeedChangeNameFileList
 };
