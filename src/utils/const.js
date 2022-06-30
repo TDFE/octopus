@@ -4,6 +4,7 @@ const PROJECT_CONFIG = {
   dir: './.octopus',
   defaultConfig: {
     kiwiDir: './.octopus',
+    proType: '',
     srcLang: 'zh-CN',
     distLangs: ['en-US'],
     googleApiKey: '',

@@ -3,24 +3,13 @@ const path = require('path');
 const _ = require('lodash');
 const { PROJECT_CONFIG, OCTOPUS_CONFIG_FILE } = require('../utils/const')
 
-function creteConfigFile(existDir) {
+function creteConfigFile(answers) {
     const configDir = path.resolve(process.cwd(), `./${OCTOPUS_CONFIG_FILE}`);
-    if (existDir && fs.existsSync(existDir) && !fs.existsSync(configDir)) {
-        const config = JSON.stringify(
-            {
-                ...PROJECT_CONFIG.defaultConfig,
-                otpDir: existDir
-            },
-            null,
-            2
-        );
-        fs.writeFile(configDir, config, err => {
-            if (err) {
-                console.log(err);
-            }
-        });
-    } else if (!fs.existsSync(configDir)) {
-        const config = JSON.stringify(PROJECT_CONFIG.defaultConfig, null, 2);
+    if (!fs.existsSync(configDir)) {
+        const config = JSON.stringify({
+            ...PROJECT_CONFIG.defaultConfig, 
+            proType: answers.type
+        }, null, 2);
         fs.writeFile(configDir, config, err => {
             if (err) {
                 console.log(err);
@@ -46,20 +35,13 @@ function createCnFile() {
     }
 }
 
-function initProject(existDir) {
+function initProject(answers) {
     /** 初始化配置文件夹 */
-    if (existDir) {
-        if (!fs.existsSync(existDir)) {
-            console.log('输入的目录不存在，已为你生成默认文件夹');
-            fs.mkdirSync(PROJECT_CONFIG.dir);
-        }
-    } else if (!fs.existsSync(PROJECT_CONFIG.dir)) {
+    if (!fs.existsSync(PROJECT_CONFIG.dir)) {
         fs.mkdirSync(PROJECT_CONFIG.dir);
     }
-    creteConfigFile(existDir);
-    if (!(existDir && fs.existsSync(existDir))) {
-        createCnFile();
-    }
+    creteConfigFile(answers);
+    createCnFile();
 }
 
 module.exports = { initProject };

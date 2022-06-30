@@ -166,7 +166,8 @@ function getReplaceableStrs(currentFilename, langsPrefix, translateTexts, target
  * 递归匹配项目中所有的代码的中文
  * @param {dirPath} 文件夹路径
  */
-function extractAll({ dirPath, prefix, proType }) {
+function extractAll({ dirPath, prefix }) {
+  const proType = CONFIG.proType;
   const dir = dirPath || './';
   // 去除I18N
   const langsPrefix = prefix ? prefix : null;

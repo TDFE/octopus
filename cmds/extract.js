@@ -1,7 +1,5 @@
 const fs = require('fs');
 const { isString } = require('lodash');
-const inquirer = require('inquirer');
-const questions = require('../config/init');
 const { extractAll } = require('../src/extract/extract');
 
 exports.command = 'extract <dirPath> [prefix]';
@@ -15,11 +13,9 @@ exports.handler = async (argv) => {
     if (isString(argv.prefix) && !new RegExp(/^([-_a-zA-Z1-9$]+)+$/).test(argv.prefix)) {
         console.log('字母、下滑线、破折号、$ 字符组成的变量名');
     } else {
-        let answers = await inquirer.prompt(questions);
         const extractAllParams = {
             prefix: isString(argv.prefix) && argv.prefix,
             dirPath: isString(argv.dirPath) && argv.dirPath,
-            type: answers.type
         };
 
         extractAll(extractAllParams);
