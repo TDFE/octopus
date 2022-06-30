@@ -1,4 +1,4 @@
-const { excel } = require('../src/excel');
+const { excel } = require('../src/import');
 
 exports.command = 'import [langs]';
 

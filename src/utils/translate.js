@@ -3,7 +3,7 @@
  * @Author: 郑泳健
  * @Date: 2022-06-02 10:09:01
  * @LastEditors: 郑泳健
- * @LastEditTime: 2022-06-26 17:32:33
+ * @LastEditTime: 2022-06-30 18:55:03
  */
 const fs = require('fs');
 const path = require('path');
@@ -241,11 +241,10 @@ function rewriteFiles(fileKeyValueList, lang) {
  * @param {*} originSuffix 原后缀
  * @param {*} changedSuffix 新后缀
  */
-function changeFileSuffix(filelist, originSuffix, changedSuffix) {
-    return Promise.all(filelist.map((fileName) => {
-        console.log(fileName)
-        fs.renameSync(fileName + originSuffix, fileName + changedSuffix)
-    }));
+async function changeFileSuffix(filelist, originSuffix, changedSuffix) {
+    for (let i of filelist) {
+        await fs.renameSync(i + originSuffix, i + changedSuffix)
+    }
 }
 
 /**
@@ -269,7 +268,6 @@ function getNeedChangeNameFileList(path, originSuffix, fileList = []) {
             fileList.push(`${path}/${filename}`);
         }
     });
-
     return fileList;
 }
 
