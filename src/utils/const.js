@@ -3,7 +3,7 @@ const OCTOPUS_CONFIG_FILE = 'otp-config.json';
 const PROJECT_CONFIG = {
   dir: './.octopus',
   defaultConfig: {
-    kiwiDir: './.octopus',
+    otpDir: './.octopus',
     proType: '',
     srcLang: 'zh-CN',
     distLangs: ['en-US'],

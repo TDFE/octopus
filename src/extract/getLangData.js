@@ -4,7 +4,7 @@
  const { getProjectConfig, flatten } = require('../utils');
 
 const CONFIG = getProjectConfig();
-const LANG_DIR = path.resolve(CONFIG.kiwiDir, CONFIG.srcLang);
+const LANG_DIR = path.resolve(CONFIG.otpDir, CONFIG.srcLang);
 const I18N_GLOB = `${LANG_DIR}/**/*.`;
 
 /**

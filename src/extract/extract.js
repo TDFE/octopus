@@ -12,11 +12,8 @@ const { replaceAndUpdate, hasImportI18N, createImportI18N } = require('./replace
 
 const CONFIG = getProjectConfig();
 
-/**
- * 剔除 kiwiDir 下的文件
- */
 function removeLangsFiles(files) {
-  const langsDir = path.resolve(process.cwd(), CONFIG.kiwiDir);
+  const langsDir = path.resolve(process.cwd(), CONFIG.otpDir);
   return files.filter(file => {
     const completeFile = path.resolve(process.cwd(), file);
     return !completeFile.includes(langsDir);
@@ -175,7 +172,7 @@ function extractAll({ dirPath, prefix }) {
   const origin = CONFIG.defaultTranslateKeyApi || 'Pinyin';
   if (!['Pinyin', 'Google', 'Baidu'].includes(CONFIG.defaultTranslateKeyApi)) {
     console.log(
-      `Kiwi 仅支持 ${highlightText('Pinyin、Google、Baidu')}，请修改 ${highlightText('defaultTranslateKeyApi')} 配置项`
+      `opt 仅支持 ${highlightText('Pinyin、Google、Baidu')}，请修改 ${highlightText('defaultTranslateKeyApi')} 配置项`
     );
     return;
   }

@@ -51,11 +51,11 @@ function getProjectConfig() {
 /**
  * 获取语言资源的根目录
  */
-function getKiwiDir() {
+function getOtpDir() {
   const config = getProjectConfig();
 
   if (config) {
-    return config.kiwiDir;
+    return config.otpDir;
   }
 }
 
@@ -64,7 +64,7 @@ function getKiwiDir() {
  * @param lang
  */
 function getLangDir(lang) {
-  const langsDir = getKiwiDir();
+  const langsDir = getOtpDir();
   return path.resolve(langsDir, lang);
 }
 
@@ -291,7 +291,7 @@ function spining(text, callback) {
 }
 
 module.exports = {
-  getKiwiDir,
+  getOtpDir,
   getLangDir,
   traverse,
   retry,
