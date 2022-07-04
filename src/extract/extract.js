@@ -89,8 +89,8 @@ function getSuggestion(currentFilename) {
   if (!(suggestion && suggestion.length)) {
     const names = slash(currentFilename).split('/');
     const fileName = _.last(names);
-    const fileKey = fileName.split('.')[0].replace(new RegExp('-', 'g'), '_');
-    const dir = names[names.length - 2].replace(new RegExp('-', 'g'), '_');
+    let fileKey = fileName.split('.')[0].replace(new RegExp('-', 'g'), '_');
+    let dir = names[names.length - 2].replace(new RegExp('-', 'g'), '_');
     if (dir === fileKey) {
       suggestion = [dir];
     } else {
@@ -113,6 +113,7 @@ function getReplaceableStrs(currentFilename, langsPrefix, translateTexts, target
   const finalLangObj = getSuggestLangObj();
   const virtualMemory = {};
   const suggestion = getSuggestion(currentFilename);
+
   const replaceableStrs = targetStrs.reduce((prev, curr, i) => {
     const key = findMatchKey(finalLangObj, curr.text);
     if (!virtualMemory[curr.text]) {
@@ -125,7 +126,9 @@ function getReplaceableStrs(currentFilename, langsPrefix, translateTexts, target
         });
       }
       const transText = translateTexts[i] && _.camelCase(translateTexts[i]);
-      let transKey = `${suggestion.length ? suggestion.join('.') + '.' : ''}${transText}`;
+      let suffix = suggestion.length ? suggestion.join('.') + '.' : '';
+      suffix = suffix.toLocaleLowerCase();
+      let transKey = `${suffix}${transText}`;
       if (langsPrefix) {
         transKey = `${langsPrefix}.${transText}`;
       }
@@ -209,6 +212,7 @@ function extractAll({ dirPath, prefix }) {
       }
       return pre.concat(strObj);
     }, []);
+
     const len = item.texts.length - targetStrs.length;
     if (len > 0) {
       failInfo(`存在 ${highlightText(len)} 处文案无法替换，请避免在模板字符串的变量中嵌套中文`);
