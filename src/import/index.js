@@ -1,12 +1,10 @@
 /*
- * @Description: 
+ * @Description: 讲excel的内容导入会json
  * @Author: 郑泳健
  * @Date: 2022-06-26 11:29:33
  * @LastEditors: 郑泳健
- * @LastEditTime: 2022-06-30 18:36:59
+ * @LastEditTime: 2022-07-06 11:54:58
  */
-const fs = require('fs');
-const path = require('path');
 const {
     otpPath,
     flatObject,
@@ -20,26 +18,19 @@ const { getProjectConfig } = require('../utils/index')
 const { OCTOPUS_CONFIG_FILE } = require('../utils/const')
 
 // 人工翻译后对象
-function excel(str) {
+function importExcel() {
     (async () => {
-        const list = str ? str.split(',') : undefined;
         const otpConfig = getProjectConfig()
         const distLang = otpConfig && otpConfig.distLangs
 
-        if (str && (!Array.isArray(list) || !list.length)) {
-            console.log('参数必须为各语言用逗号隔开,例如en-US,zh-TW')
-            return;
-        }
-        if (!str && !Array.isArray(distLang)) {
+        if (!Array.isArray(distLang)) {
             console.log(`请配置${OCTOPUS_CONFIG_FILE}里面的distLangs`)
             return;
         }
 
         await syncLang();
 
-        const arr = list || distLang
-
-        arr.forEach((lang) => {
+        distLang.forEach((lang) => {
             parseExcel(otpPath + `/${lang}/translate_${lang}.xls`, function (translateMap) {
                 const { default: currentLangMap } = require(`../temp/${lang}`);
                 const langFlat = flatObject(currentLangMap);
@@ -58,5 +49,5 @@ function excel(str) {
 }
 
 module.exports = {
-    excel
+    importExcel
 }
