@@ -3,7 +3,7 @@
  * @Author: 郑泳健
  * @Date: 2022-06-26 11:29:33
  * @LastEditors: 郑泳健
- * @LastEditTime: 2022-07-06 11:54:58
+ * @LastEditTime: 2022-07-06 14:24:58
  */
 const {
     otpPath,
@@ -14,9 +14,10 @@ const {
 } = require('../utils/translate');
 const syncLang = require('../utils/syncLang')
 const { getProjectConfig } = require('../utils/index')
-
+const ora = require('ora');
 const { OCTOPUS_CONFIG_FILE } = require('../utils/const')
 
+const spinner = ora('开始import');
 // 人工翻译后对象
 function importExcel() {
     (async () => {
@@ -29,7 +30,7 @@ function importExcel() {
         }
 
         await syncLang();
-
+        spinner.start('正在从excel开始同步')
         distLang.forEach((lang) => {
             parseExcel(otpPath + `/${lang}/translate_${lang}.xls`, function (translateMap) {
                 const { default: currentLangMap } = require(`../temp/${lang}`);
@@ -45,6 +46,7 @@ function importExcel() {
                 rewriteFiles(fileKeyValueList, lang);
             });
         })
+        spinner.succeed('从excel同步成功')
     })()
 }
 
