@@ -12,6 +12,10 @@ const { replaceAndUpdate, hasImportI18N, createImportI18N } = require('./replace
 
 const CONFIG = getProjectConfig();
 
+function formatExclude(exclude){
+  return (exclude || []).map(p => path.resolve(process.cwd(), p));
+}
+
 function removeLangsFiles(files) {
   const langsDir = path.resolve(process.cwd(), CONFIG.otpDir);
   return files.filter(file => {
@@ -29,7 +33,7 @@ function findAllChineseText(dir) {
   let files = [];
   if (isDirectory(first)) {
     const dirPath = path.resolve(process.cwd(), dir);
-    files = getSpecifiedFiles(dirPath, CONFIG.exclude);
+    files = getSpecifiedFiles(dirPath, formatExclude(CONFIG.exclude));
   } else {
     files = removeLangsFiles(dir.split(','));
   }
