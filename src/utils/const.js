@@ -22,8 +22,8 @@ const PROJECT_CONFIG = {
     fileSuffix: ['.ts', '.js', '.vue', '.jsx', '.tsx'], //默认只提取当前后缀名
     defaultTranslateKeyApi: 'Pinyin', // 批量提取文案时生成key值时的默认翻译源
     importI18N: `import I18N from 'src/utils/I18N';`,
-    ignoreDir: '',
-    ignoreFile: ''
+    include:['./src'],
+    exclude:[]
   },
   langMap: {
     ['en-US']: 'en',

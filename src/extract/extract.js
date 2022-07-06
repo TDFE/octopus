@@ -29,7 +29,7 @@ function findAllChineseText(dir) {
   let files = [];
   if (isDirectory(first)) {
     const dirPath = path.resolve(process.cwd(), dir);
-    files = getSpecifiedFiles(dirPath, CONFIG.ignoreDir, CONFIG.ignoreFile);
+    files = getSpecifiedFiles(dirPath, CONFIG.exclude);
   } else {
     files = removeLangsFiles(dir.split(','));
   }
@@ -176,7 +176,7 @@ function extractAll({ dirPath, prefix }) {
     const searchErrorMsg=[]; // 检索失败
     const extractAction = []; // 执行翻译行为
     const proType = CONFIG.proType;
-    const dir = dirPath || './';
+    const dirArr = dirPath ? [dirPath] : CONFIG.include && CONFIG.include.length > 0 ? CONFIG.include : ['./'];
     // 去除I18N
     const langsPrefix = prefix ? prefix : null;
     // 翻译源配置错误，则终止
@@ -188,7 +188,7 @@ function extractAll({ dirPath, prefix }) {
         return;
     }
 
-    const allTargetStrs = findAllChineseText(dir);
+    const allTargetStrs = _.flatten(dirArr.map(findAllChineseText));
     if (allTargetStrs.length === 0) {
         console.log(highlightText('没有发现可替换的文案！'));
         return;
