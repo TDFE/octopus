@@ -2,9 +2,9 @@ const fs = require('fs');
 const { isString } = require('lodash');
 const { extractAll } = require('../src/extract/extract');
 
-exports.command = 'extract <dirPath> [prefix]';
+exports.command = 'extract [dirPath] [prefix]';
 
-exports.describe = 'extract <dirPath> [prefix] 一键批量替换指定文件夹下的所有文案';
+exports.describe = 'extract [dirPath] [prefix] 一键批量替换指定文件夹下的所有文案';
 
 exports.handler = async (argv) => {
     if (argv.prefix) {
