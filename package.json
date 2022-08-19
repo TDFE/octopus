@@ -1,6 +1,6 @@
 {
-  "name": "octopus",
-  "version": "1.0.0",
+  "name": "td-octopus",
+  "version": "0.0.1",
   "description": "I18N tool",
   "author": "Anthony Li",
   "bin": {
