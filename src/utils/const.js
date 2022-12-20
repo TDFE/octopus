@@ -31,9 +31,9 @@ const PROJECT_CONFIG = {
   },
   zhIndexFile: `import common from './common';
 
-  export default Object.assign({}, {
-    common
-  });`,
+export default Object.assign({}, {
+  common
+});`,
   zhTestFile: `export default {
     test: '测试'
 }`
