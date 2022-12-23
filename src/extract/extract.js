@@ -2,7 +2,7 @@ const slash = require('slash2');
 const _ = require('lodash');
 const path = require('path');
 
-const { getSpecifiedFiles, readFile, writeFile, isFile, isDirectory } = require('./file');
+const { getSpecifiedFiles, readFile, writeFile, isFile, isDirectory } = require('../utils/file');
 const { translateText, findMatchKey, findMatchValue,  translateKeyText,  getProjectConfig } = require('../utils');
 const { successInfo, failInfo, highlightText } = require('../utils/colors');
 const { findChineseText } = require('./findChineseText');

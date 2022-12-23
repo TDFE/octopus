@@ -4,8 +4,7 @@
  const _ = require('lodash');
  const prettier = require('prettier');
 
-
- const { getSpecifiedFiles, readFile, writeFile, isFile, isDirectory } = require('./file');
+const { getSpecifiedFiles, readFile, writeFile, isFile, isDirectory } = require('../utils/file');
 const {
   translateText,
   findMatchKey,

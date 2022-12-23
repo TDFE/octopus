@@ -23,7 +23,11 @@ const PROJECT_CONFIG = {
     defaultTranslateKeyApi: 'Pinyin', // 批量提取文案时生成key值时的默认翻译源
     importI18N: `import I18N from 'src/utils/I18N';`,
     include:['./src'],
-    exclude:[]
+    exclude:[],
+    regPath: 'locale', // 正则匹配路径地址使用
+    resourcePath: [
+      "./src/constants/locale"
+    ],
   },
   langMap: {
     ['en-US']: 'en',
