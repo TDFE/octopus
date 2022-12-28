@@ -3,7 +3,7 @@
  * @Author: 郑泳健
  * @Date: 2022-06-26 11:29:33
  * @LastEditors: 郑泳健
- * @LastEditTime: 2022-07-06 14:24:58
+ * @LastEditTime: 2022-12-28 16:48:55
  */
 const {
     otpPath,
@@ -29,11 +29,10 @@ function importExcel() {
             return;
         }
 
-        await syncLang();
         spinner.start('正在从excel开始同步')
         distLang.forEach((lang) => {
             parseExcel(otpPath + `/${lang}/translate_${lang}.xls`, function (translateMap) {
-                const { default: currentLangMap } = require(`../temp/${lang}`);
+                const currentLangMap = syncLang(lang);
                 const langFlat = flatObject(currentLangMap);
 
                 for (let i in langFlat) {
