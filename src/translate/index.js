@@ -3,7 +3,7 @@
  * @Author: 郑泳健
  * @Date: 2022-06-01 13:56:18
  * @LastEditors: 郑泳健
- * @LastEditTime: 2022-07-06 14:21:43
+ * @LastEditTime: 2022-12-28 15:47:31
  */
 const {
     syncFiles,
@@ -33,13 +33,12 @@ function translate() {
         spinner.start('正在同步文件')
         await syncFiles(distLang);
         spinner.succeed('同步文件成功')
-        await syncLang();
 
-        const { default: zhCN } = require('../temp/zh-CN');
+        const zhCN = syncLang('zh-CN');
         const zhCNflat = flatObject(zhCN);
 
         for (const lang of distLang) {
-            const { default: currentLangMap } = require(`../temp/${lang}`);
+            const currentLangMap = syncLang(lang);
             const langFlat = flatObject(currentLangMap);
             spinner.start('正在同步文件的key')
             // 删除掉多余的key，增加新的key，同时提取没有翻译过的key的列表
