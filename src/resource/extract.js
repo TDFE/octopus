@@ -107,8 +107,9 @@ const regPathSrc = (file, code) => {
       let tempList = r[1].split('/')
       tempList.splice(tempList.length - 1, 1)
       tempList = tempList.join('/')
+      tempList = tempList.toLocaleLowerCase()
       if (!list.includes(tempList)) {
-        list.push(tempList.toLocaleLowerCase())
+        list.push(tempList)
       }
     } else {
       list.push(r[1].toLocaleLowerCase())
