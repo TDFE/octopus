@@ -54,41 +54,40 @@ function findAllCnFileSrc(dir, keyMap) {
   });
   let replaceList = []
   let list = []
-  let errorList = []
   for (let index = 0; index < filterFiles.length; index++) {
     const file = filterFiles[index];
     let code = readFile(file);
-    const pathKey = regPathSrc(file);
     replaceList = []
     const regRresource1 = new RegExp('this\\.resource\\([\'|\"](\\S*?)[\'|\"]\\)', 'g')
     const regRresource = new RegExp('this\\.resource\\([\'|\"](\\S*?)[\'|\"]\\)', 'g')
     if (regRresource1.test(code)) {
-      if (keyMap[pathKey] && errorList.length === 0) {
-        let r = "";
-        while (r = regRresource.exec(code)) {
-          replaceList.push({
-            source: r[0],
-            key: r[1]
-          })
-          list.push({
-            source: r[0],
-            key: r[1]
-          })
-        }
-        console.log(`${highlightText(file)} 发现 ${highlightText(replaceList.length)} 处 this.resource`);
-        for (let index = 0; index < replaceList.length; index++) {
-          const item = replaceList[index];
-          code = code.replace(item.source, `'${keyMap[pathKey][item.key] ? keyMap[pathKey][item.key] : keyMap['common'][item.key]}'`)
-        }
-        writeFile(file, code);
-      } else {
-        errorList.push(file);
-        failInfo(`${file} 文件目录没匹配`);
+      const pathKeys = regPathSrc(file, code);
+      let r = "";
+      while (r = regRresource.exec(code)) {
+        replaceList.push({
+          source: r[0],
+          key: r[1]
+        })
+        list.push({
+          source: r[0],
+          key: r[1]
+        })
+      }
+      console.log(`${highlightText(file)} 发现 ${highlightText(replaceList.length)} 处 this.resource`);
+      for (let index = 0; index < pathKeys.length; index++) {
+          const pathKey = pathKeys[index];
+          for (let index = 0; index < replaceList.length; index++) {
+            const item = replaceList[index];
+            if (keyMap[pathKey][item.key]) {
+              code = code.replace(item.source, `'${keyMap[pathKey][item.key]}'`)
+            }
+          }
+          writeFile(file, code);
       }
     }
   }
 
-  return errorList.length ? [] : list;
+  return list;
 }
 
 const regPath = (file) => {
@@ -98,16 +97,24 @@ const regPath = (file) => {
   return list ? list[1].toLocaleLowerCase() : ''
 }
 
-const regPathSrc = (file) => {
-  const reg = new RegExp(`src\/(\\S*)[\/|\.]?`, 'g');
-  const list = reg.exec(file)
-  let temp = list[1] ? list[1].toLocaleLowerCase() : ''
-  temp = temp.split('/')
-  let str = temp[0] + '/' + temp[1]
-  if (temp[0] === 'routes' || temp[0] === 'pages') {
-    str = temp[1] + '/' + temp[2]
+const regPathSrc = (file, code) => {
+  // const reg = new RegExp(`src\/(\\S*)[\/|\.]?`, 'g');
+  const reg = new RegExp(`[\'|\"]\~locale\/(\\S*?)[\'|\"]`, 'g');
+  let r = "";
+  let list = [];
+  while (r = reg.exec(code)) {
+    if (r[1].indexOf('.properties') !== -1) {
+      let tempList = r[1].split('/')
+      tempList.splice(tempList.length - 1, 1)
+      tempList = tempList.join('/')
+      if (!list.includes(tempList)) {
+        list.push(tempList.toLocaleLowerCase())
+      }
+    } else {
+      list.push(r[1].toLocaleLowerCase())
+    }
   }
-  return str
+  return list
 }
 
 /**
@@ -133,18 +140,16 @@ function extractAll({ dirPath, resourcePath }) {
     });
   });
 
-
   const allTargetStrs = _.flatten(dirArr.map((dir) => {
     return findAllCnFileSrc(dir, allKeyObj)
   }));
-
 
   if (allTargetStrs.length === 0) {
     console.log(highlightText('以上文件中没有发现源文件 this.resource！'), allTargetStrs);
     return;
   }
 
-  successInfo('替换成功！')
+  successInfo('替换成功！'+ allTargetStrs.length + '个', )
 
 }
 
