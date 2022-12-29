@@ -78,7 +78,7 @@ function findAllCnFileSrc(dir, keyMap) {
           const pathKey = pathKeys[index];
           for (let index = 0; index < replaceList.length; index++) {
             const item = replaceList[index];
-            if (keyMap[pathKey][item.key]) {
+            if (keyMap[pathKey] && keyMap[pathKey][item.key]) {
               code = code.replace(item.source, `'${keyMap[pathKey][item.key]}'`)
             }
           }
