@@ -6,7 +6,10 @@
  const babel = require('@babel/core');
  
 /** unicode cjk 中日韩文 范围 */
-const DOUBLE_BYTE_REGEX = /[\u4E00-\u9FFF]/g;
+// /[\u4E00-\u9FFF]/g;
+// 修改这个的原因是因为项目中存在'[^a-zA-Z0-9_.\u4e00-\u9fa5]'这种正则会被匹配到
+const DOUBLE_BYTE_REGEX = /^[^\\u4e00-\\u9fa5]*[\u4e00-\u9fa5]/g;
+
 
 function transerI18n(code, filename, lang) {
   if (lang === 'ts') {
