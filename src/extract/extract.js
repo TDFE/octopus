@@ -261,6 +261,14 @@ function extractAll({ dirPath, prefix }) {
                 currentFilename = obj.fileName;
                 targetStrs = obj.targetStrs;
                 console.log(`${currentFilename} 替换中...`);
+                // 对一些特殊文件名进行优化，要不然会出现一些意想不到的bug
+                if(obj.key) {
+                    const [fileName] = obj.key.split('.') || []
+
+                    if(CONFIG['reservedKey'] && CONFIG['reservedKey'].some(i => i.toLocaleLowerCase() === fileName)) {
+                        obj.key = 'td' + obj.key;
+                    }
+                }
                 return replaceAndUpdate(currentFilename, obj.target, `I18N.${obj.key}`, false, obj.needWrite, proType);
             });
         }, Promise.resolve())
