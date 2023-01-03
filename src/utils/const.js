@@ -28,6 +28,7 @@ const PROJECT_CONFIG = {
     resourcePath: [
       "./src/constants/locale"
     ],
+    reservedKey: ["template", "case"]
   },
   langMap: {
     ['en-US']: 'en',

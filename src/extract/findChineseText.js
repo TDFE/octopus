@@ -6,7 +6,7 @@
  const babel = require('@babel/core');
  
 /** unicode cjk 中日韩文 范围 */
-const DOUBLE_BYTE_REGEX = /[\u4E00-\u9FFF]/g;
+const DOUBLE_BYTE_REGEX = /[\u4E00-\u9FFF]/g
 
 function transerI18n(code, filename, lang) {
   if (lang === 'ts') {
