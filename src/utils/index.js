@@ -9,7 +9,7 @@ const inquirer = require("inquirer");
 const { pinyin } = require("pinyin-pro");
 const ora = require('ora');
 const { PROJECT_CONFIG, OCTOPUS_CONFIG_FILE } = require("./const");
-
+const prettier = require('prettier');
 const colors = require('colors');
 
 function lookForFiles(dir, fileName) {
@@ -290,6 +290,24 @@ function spining(text, callback) {
   }
 }
 
+/**
+ * 使用 Prettier 格式化文件
+ * @param fileContent
+ */
+function prettierFile(fileContent, proType) {
+    try {
+      return prettier.format(fileContent, {
+        parser: proType === 'vue' ? 'vue' : 'typescript',
+        trailingComma: 'all',
+        singleQuote: true
+      });
+      // return fileContent;
+    } catch (e) {
+      failInfo(`代码格式化报错！${e.toString()}\n代码为：${fileContent}`);
+      return fileContent;
+    }
+  }
+
 module.exports = {
   getOtpDir,
   getLangDir,
@@ -305,5 +323,6 @@ module.exports = {
   lookForFiles,
   getTranslateOriginType,
   translateKeyText,
-  spining
+  spining,
+  prettierFile
 };

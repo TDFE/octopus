@@ -1,8 +1,7 @@
- const fs = require('fs');
- const path = require('path');
- const ts = require('typescript');
- const _ = require('lodash');
- const prettier = require('prettier');
+const fs = require('fs');
+const path = require('path');
+const ts = require('typescript');
+const _ = require('lodash');
 
 const { getSpecifiedFiles, readFile, writeFile, isFile, isDirectory } = require('../utils/file');
 const {
@@ -11,7 +10,8 @@ const {
   findMatchValue,
   getLangDir,
   translateKeyText,
-  getProjectConfig
+  getProjectConfig,
+  prettierFile
 } = require('../utils');
 
 const { successInfo, failInfo } = require('../utils/colors');
@@ -50,24 +50,6 @@ function updateLangFiles(keyValue, text, validateDuplicate, proType) {
     text = text.replace(/\\n/gm, '\n');
     _.set(obj, fullKey, text);
     fs.writeFileSync(targetFilename, prettierFile(`export default ${JSON.stringify(obj, null, 2)}`, proType));
-  }
-}
-
-/**
- * 使用 Prettier 格式化文件
- * @param fileContent
- */
-function prettierFile(fileContent, proType) {
-  try {
-    return prettier.format(fileContent, {
-      parser: proType === 'vue' ? 'vue' : 'typescript',
-      trailingComma: 'all',
-      singleQuote: true
-    });
-    // return fileContent;
-  } catch (e) {
-    failInfo(`代码格式化报错！${e.toString()}\n代码为：${fileContent}`);
-    return fileContent;
   }
 }
 

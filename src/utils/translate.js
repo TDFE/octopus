@@ -3,7 +3,7 @@
  * @Author: 郑泳健
  * @Date: 2022-06-02 10:09:01
  * @LastEditors: 郑泳健
- * @LastEditTime: 2022-07-06 11:24:00
+ * @LastEditTime: 2023-01-04 14:54:06
  */
 const fs = require('fs');
 const path = require('path');
@@ -11,7 +11,7 @@ const baiduTranslate = require('baidu-translate');
 const shell = require('shelljs');
 const _ = require('lodash');
 const XLSX = require('xlsx');
-const { getProjectConfig } = require('../utils/index');
+const { getProjectConfig, prettierFile } = require('../utils/index');
 
 const otpPath = path.resolve(process.cwd(), getProjectConfig().otpDir);
 
@@ -344,7 +344,7 @@ function rewriteFiles(fileKeyValueList, lang) {
     if (Array.isArray(fileKeyValueList) && fileKeyValueList.length) {
         fileKeyValueList.forEach(({ fileName, value }) => {
             const distRst = getDistRst(value);
-            fs.writeFileSync(`${otpPath}/${lang}/${fileName}.js`, 'export default ' + JSON.stringify(distRst, null, 4));
+            fs.writeFileSync(`${otpPath}/${lang}/${fileName}.js`, prettierFile('export default ' + JSON.stringify(distRst, null, 2)));
         });
     }
 }
