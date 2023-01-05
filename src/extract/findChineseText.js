@@ -145,6 +145,26 @@ function visit(node) {
             isString: true
           });
         }
+        break;
+      }
+      // 兼容<TabPane tab={<>中国风险地区统计</>} key="china" />这种场景
+      case ts.SyntaxKind.JsxText: {
+        const text = node.text;
+        /** 修复注释含有中文的情况，Angular 文件错误的 Ast 情况 */
+        const noCommentText = removeFileComment(text, fileName);
+
+        if (noCommentText.match(DOUBLE_BYTE_REGEX)) {
+          const start = node.getStart();
+          const end = node.getEnd();
+          const range = { start, end };
+
+          matches.push({
+            range,
+            text: text.trim(),
+            isString: false
+          });
+        }
+        break;
       }
     }
 
