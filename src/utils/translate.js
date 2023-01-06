@@ -136,6 +136,8 @@ async function getAdjustLangObjAndAddList(lang, langObj = {}, zhCNObj = {}) {
     const adjustLangObj = {};
     // 需要新增的key/value
     const needAddList = [];
+    // 全量的的key/value
+    const allList = [];
     // 循环zh-CN的key，得到当前语言包的key
     for (let key in zhCNObj) {
         // 4种情况下，需要将key放入到翻译对象里面去
@@ -147,6 +149,8 @@ async function getAdjustLangObjAndAddList(lang, langObj = {}, zhCNObj = {}) {
             needAddList.push([key, zhCNObj[key], '', '']);
         }
 
+        allList.push([key, zhCNObj[key], '', langObj[key]]);
+
         adjustLangObj[key] = langObj[key] || zhCNObj[key];
     }
 
@@ -154,7 +158,8 @@ async function getAdjustLangObjAndAddList(lang, langObj = {}, zhCNObj = {}) {
 
     return {
         fileKeyValueList: getFileKeyValueList(adjustLangObj),
-        addList
+        addList,
+        allList
     };
 }
 
