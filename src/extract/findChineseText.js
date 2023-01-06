@@ -164,15 +164,20 @@ function visit(node) {
             isString: false
           });
         }
-        break;
       }
     }
 
     ts.forEachChild(node, visit);
   }
   ts.forEachChild(ast, visit);
-
-  return matches;
+  // 过滤相同的选项
+  return matches.reduce((total, item) => {
+    const bool = total.some(i => _.isEqual(i, item));
+    if(!bool) {
+      total.push(item)
+    }
+    return total;
+  }, []);
 }
 
 /**
