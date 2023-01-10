@@ -149,6 +149,7 @@ async function getAdjustLangObjAndAddList(lang, langObj = {}, zhCNObj = {}) {
             needAddList.push([key, zhCNObj[key], '', '']);
         }
 
+        // allList.push([key, zhCNObj[key], '', _.upperFirst(langObj[key])]);
         allList.push([key, zhCNObj[key], '', langObj[key]]);
 
         adjustLangObj[key] = langObj[key] || zhCNObj[key];
