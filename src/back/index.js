@@ -3,7 +3,7 @@
  * @Author: 郑泳健
  * @Date: 2022-06-01 13:56:18
  * @LastEditors: 郑泳健
- * @LastEditTime: 2023-01-11 11:07:41
+ * @LastEditTime: 2023-01-11 15:14:00
  */
 const path = require('path')
 const fs = require('fs')
@@ -151,7 +151,8 @@ const { getProjectConfig } = require('../utils/index')
       if (Array.isArray(matchList) && matchList.length) {
         sum += matchList.length;
         matchList.forEach(({ key, value }) => {
-          code = code.replace(key, "'" + value + "'")
+          const replaceVal = value && value.includes("'") ? '"' + value + '"'  : "'" + value + "'"
+          code = code.replace(key, replaceVal)
         })
       }
 
