@@ -3,7 +3,7 @@
  * @Author: 郑泳健
  * @Date: 2022-06-01 13:56:18
  * @LastEditors: 郑泳健
- * @LastEditTime: 2023-01-11 17:23:29
+ * @LastEditTime: 2023-01-18 10:24:12
  */
 const path = require('path')
 const fs = require('fs')
@@ -120,7 +120,7 @@ function getValueByI18N(filePath, str, flatObj) {
         }
 
         const matchList = matchs.reduce((total, item) => {
-            if (!item.includes('I18N.template') && !item.includes('I18N.setLang')) {
+            if (!item('I18N.template(') && !item.includes('I18N.setLang(')) {
                 const text = flatObj[item.replace('I18N.', '')]
                 if (text) {
                     total.push({ key: item, value: text })
