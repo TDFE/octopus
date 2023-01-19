@@ -83,10 +83,12 @@ function visit(node) {
           const start = node.getStart();
           const end = node.getEnd();
           const range = { start, end };
+          const { line } = ast.getLineAndCharacterOfPosition(start)
           matches.push({
             range,
             text,
-            isString: true
+            isString: true,
+            line
           });
         }
         break;
@@ -104,11 +106,12 @@ function visit(node) {
               const start = child.getStart();
               const end = child.getEnd();
               const range = { start, end };
-
+              const { line } = ast.getLineAndCharacterOfPosition(start)
               matches.push({
                 range,
                 text: text.trim(),
-                isString: false
+                isString: false,
+                line
               });
             }
           }
@@ -123,10 +126,12 @@ function visit(node) {
           const start = node.getStart();
           const end = node.getEnd();
           const range = { start, end };
+          const { line } = ast.getLineAndCharacterOfPosition(start)
           matches.push({
             range,
             text: code.slice(start + 1, end - 1),
-            isString: true
+            isString: true,
+            line
           });
         }
         break;
@@ -139,10 +144,12 @@ function visit(node) {
           const start = node.getStart();
           const end = node.getEnd();
           const range = { start, end };
+          const { line } = ast.getLineAndCharacterOfPosition(start)
           matches.push({
             range,
             text: code.slice(start + 1, end - 1),
-            isString: true
+            isString: true,
+            line
           });
         }
         break;
@@ -157,19 +164,20 @@ function visit(node) {
           const start = node.getStart();
           const end = node.getEnd();
           const range = { start, end };
-
+          const { line } = ast.getLineAndCharacterOfPosition(start)
           matches.push({
             range,
             text: text.trim(),
-            isString: false
+            isString: false,
+            line
           });
         }
       }
     }
 
-    ts.forEachChild(node, visit);
+    ts.forEachChild(node, (node) => visit(node, ast));
   }
-  ts.forEachChild(ast, visit);
+  ts.forEachChild(ast, (node) => visit(node, ast));
   // 过滤相同的选项
   return matches.reduce((total, item) => {
     const bool = total.some(i => _.isEqual(i, item));
