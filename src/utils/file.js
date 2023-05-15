@@ -1,6 +1,6 @@
- const fs = require('fs');
- const path = require('path');
- const _ = require('lodash');
+const fs = require('fs');
+const path = require('path');
+const _ = require('lodash');
 
 /**
  * 获取文件夹下符合要求的所有文件
@@ -18,7 +18,7 @@ function getSpecifiedFiles(dir, exclude = []) {
       return files.concat(getSpecifiedFiles(name, exclude));
     }
 
-    if (isFile && !_.find(exclude, p=>name.includes(p))) {
+    if (isFile && !_.find(exclude, (p) => name.includes(p))) {
       return files.concat(name);
     }
     return files;

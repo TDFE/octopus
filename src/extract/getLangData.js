@@ -1,7 +1,7 @@
- const fs = require('fs');
- const path = require('path');
- const globby = require('glob');
- const { getProjectConfig, flatten } = require('../utils');
+const fs = require('fs');
+const path = require('path');
+const globby = require('glob');
+const { getProjectConfig, flatten } = require('../utils');
 
 const CONFIG = getProjectConfig();
 const LANG_DIR = path.resolve(CONFIG.otpDir, CONFIG.srcLang);
@@ -70,4 +70,4 @@ function getSuggestLangObj() {
   return finalLangObj;
 }
 
-module.exports =  { getSuggestLangObj, getLangData };
+module.exports = { getSuggestLangObj, getLangData };

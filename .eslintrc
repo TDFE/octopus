@@ -1,0 +1,27 @@
+{
+  "extends": [
+    "tongdun/js"
+  ],
+  "plugins": [
+    "td-rules-plugin"
+  ],
+  "rules": {
+    "no-else-return":0,
+    "no-console":0,
+    "no-template-curly-in-string":0,
+    "prettier/prettier": [
+      1,
+      {
+        "endOfLine": "auto",
+        "printWidth": 100, // 超过140个字符就换行
+        "semi": true, // 有分号
+        "singleQuote": true, // 单引号
+        "tabWidth": 2, // 一个tab相当于4个空格
+        // "parser": "flow",
+        "jsxBracketSameLine": false, // jsx 标签的反尖括号需要换行
+        "trailingComma": "none", // 末尾不需要逗号
+        "arrowParens": "always"
+      }
+    ]
+  }
+}

@@ -49,7 +49,10 @@ function updateLangFiles(keyValue, text, validateDuplicate, proType) {
     // \n 会被自动转义成 \\n，这里转回来
     text = text.replace(/\\n/gm, '\n');
     _.set(obj, fullKey, text);
-    fs.writeFileSync(targetFilename, prettierFile(`export default ${JSON.stringify(obj, null, 2)}`, proType));
+    fs.writeFileSync(
+      targetFilename,
+      prettierFile(`export default ${JSON.stringify(obj, null, 2)}`, proType)
+    );
   }
 }
 
@@ -63,7 +66,10 @@ function addImportToMainLangFile(newFilename) {
   let mainContent = '';
   if (fs.existsSync(`${srcLangDir}/index.js`)) {
     mainContent = fs.readFileSync(`${srcLangDir}/index.js`, 'utf8');
-    mainContent = mainContent.replace(/^(\s*import.*?;)$/m, `$1\nimport ${newFilename} from './${newFilename}';`);
+    mainContent = mainContent.replace(
+      /^(\s*import.*?;)$/m,
+      `$1\nimport ${newFilename} from './${newFilename}';`
+    );
     if (/(}\);)/.test(mainContent)) {
       if (/\,\n(}\);)/.test(mainContent)) {
         /** 最后一行包含,号 */
@@ -113,8 +119,11 @@ function hasImportI18N(filePath) {
           const namedBindings = importClause.namedBindings;
           // import { I18N } from 'src/utils/I18N';
           if (namedBindings.kind === ts.SyntaxKind.NamedImports) {
-            namedBindings.elements.forEach(element => {
-              if (element.kind === ts.SyntaxKind.ImportSpecifier && _.get(element, 'name.escapedText') === 'I18N') {
+            namedBindings.elements.forEach((element) => {
+              if (
+                element.kind === ts.SyntaxKind.ImportSpecifier &&
+                _.get(element, 'name.escapedText') === 'I18N'
+              ) {
                 hasImportI18N = true;
               }
             });

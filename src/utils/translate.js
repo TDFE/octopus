@@ -21,24 +21,24 @@ const otpPath = path.resolve(process.cwd(), getProjectConfig().otpDir);
  * @returns boolean
  */
 const isObj = function (obj) {
-    return Object.prototype.toString.call(obj) === '[object Object]';
+  return Object.prototype.toString.call(obj) === '[object Object]';
 };
 
 /**
  * 深度优先遍历对象中的所有 string 属性，即文案
  */
 function traverse(obj, cb) {
-    function traverseInner(obj, cb, path) {
-        _.forEach(obj, (val, key) => {
-            if (typeof val === 'string') {
-                cb(val, [...path, key].join('.'));
-            } else if (typeof val === 'object' && val !== null) {
-                traverseInner(val, cb, [...path, key]);
-            }
-        });
-    }
+  function traverseInner(obj, cb, path) {
+    _.forEach(obj, (val, key) => {
+      if (typeof val === 'string') {
+        cb(val, [...path, key].join('.'));
+      } else if (typeof val === 'object' && val !== null) {
+        traverseInner(val, cb, [...path, key]);
+      }
+    });
+  }
 
-    traverseInner(obj, cb, []);
+  traverseInner(obj, cb, []);
 }
 
 /**
@@ -46,34 +46,34 @@ function traverse(obj, cb) {
  * @param {*} distLangs 目录名 []
  */
 async function syncFiles(distLangs = []) {
-    const zhCNPath = otpPath + '/zh-CN';
-    const files = shell.ls('-A', zhCNPath);
+  const zhCNPath = otpPath + '/zh-CN';
+  const files = shell.ls('-A', zhCNPath);
 
-    for (const lang of distLangs) {
-        const currentLangPath = otpPath + '/' + lang;
-        // 如果目录不存在就全部复制过去
-        if (!shell.test('-e', currentLangPath)) {
-            await shell.cp('-R', zhCNPath, currentLangPath);
-        } else {
-            const currentDirFiles = await shell.ls('-A', currentLangPath);
+  for (const lang of distLangs) {
+    const currentLangPath = otpPath + '/' + lang;
+    // 如果目录不存在就全部复制过去
+    if (!shell.test('-e', currentLangPath)) {
+      await shell.cp('-R', zhCNPath, currentLangPath);
+    } else {
+      const currentDirFiles = await shell.ls('-A', currentLangPath);
 
-            // 删除多余的文件
-            for (const i of currentDirFiles) {
-                if (!files.includes(i)) {
-                    await shell.rm('-rf', currentLangPath + '/' + i);
-                }
-            }
-
-            // 增加没有的文件
-            for (const i of files) {
-                if (!currentDirFiles.includes(i)) {
-                    shell.touch(currentLangPath + '/' + i);
-                }
-            }
+      // 删除多余的文件
+      for (const i of currentDirFiles) {
+        if (!files.includes(i)) {
+          await shell.rm('-rf', currentLangPath + '/' + i);
         }
-        // 直接复制index.js到对应的语种目录下
-        await shell.cp('-R', zhCNPath + '/index.js', currentLangPath + '/index.js');
+      }
+
+      // 增加没有的文件
+      for (const i of files) {
+        if (!currentDirFiles.includes(i)) {
+          shell.touch(currentLangPath + '/' + i);
+        }
+      }
     }
+    // 直接复制index.js到对应的语种目录下
+    await shell.cp('-R', zhCNPath + '/index.js', currentLangPath + '/index.js');
+  }
 }
 
 /**
@@ -84,19 +84,19 @@ async function syncFiles(distLangs = []) {
  * @param {*} result 扁平化后的结果 {"a.b.c": "测试"}
  */
 function flatObject(obj, prefix = '', result = {}) {
-    if (!isObj(obj)) {
-        return result;
-    }
-
-    Object.entries(obj).forEach(([key, value]) => {
-        const sumKey = prefix ? prefix + '.' + key : key;
-        if (!isObj(value)) {
-            result[sumKey] = value;
-        }
-        flatObject(value, sumKey, result);
-    });
-
+  if (!isObj(obj)) {
     return result;
+  }
+
+  Object.entries(obj).forEach(([key, value]) => {
+    const sumKey = prefix ? prefix + '.' + key : key;
+    if (!isObj(value)) {
+      result[sumKey] = value;
+    }
+    flatObject(value, sumKey, result);
+  });
+
+  return result;
 }
 
 /**
@@ -105,23 +105,23 @@ function flatObject(obj, prefix = '', result = {}) {
  * @returns [{fileName: a, value: {b.c: "测试", d.e: "姓名"}}]
  */
 function getFileKeyValueList(adjustLangObj) {
-    const adjustLangObjKeys = Object.keys(adjustLangObj);
-    const fileKeyValueList = adjustLangObjKeys.reduce((total, item) => {
-        const [fileName, ...rest] = item.split('.');
-        const index = total.findIndex((i) => i.fileName === fileName);
+  const adjustLangObjKeys = Object.keys(adjustLangObj);
+  const fileKeyValueList = adjustLangObjKeys.reduce((total, item) => {
+    const [fileName, ...rest] = item.split('.');
+    const index = total.findIndex((i) => i.fileName === fileName);
 
-        if (index >= 0) {
-            total[index].value[rest.join('.')] = adjustLangObj[item];
-        } else {
-            total.push({
-                fileName,
-                value: { [rest.join('.')]: adjustLangObj[item] }
-            });
-        }
-        return total;
-    }, []);
+    if (index >= 0) {
+      total[index].value[rest.join('.')] = adjustLangObj[item];
+    } else {
+      total.push({
+        fileName,
+        value: { [rest.join('.')]: adjustLangObj[item] }
+      });
+    }
+    return total;
+  }, []);
 
-    return fileKeyValueList;
+  return fileKeyValueList;
 }
 
 /**
@@ -131,148 +131,160 @@ function getFileKeyValueList(adjustLangObj) {
  * @returns { fileKeyValueList: [{fileName: a, value: {"b.c": xx}}], addList: [["a.b.c": "dd"]] }
  */
 async function getAdjustLangObjAndAddList(lang, langObj = {}, zhCNObj = {}) {
-    const langObjKeys = Object.keys(langObj);
-    // 调整后的语言包key/value
-    const adjustLangObj = {};
-    // 需要新增的key/value
-    const needAddList = [];
-    // 全量的的key/value
-    const allList = [];
-    // 循环zh-CN的key，得到当前语言包的key
-    for (let key in zhCNObj) {
-        // 4种情况下，需要将key放入到翻译对象里面去
-        // 1: 这个key不存在当前的语言包key/value中
-        // 2: 语言包的key的value类型不是string
-        // 3: 语言包的key的value值为""
-        // 4: 语言包的key的value和zh-CN的key的value一样
-        if (!langObjKeys.includes(key) || typeof langObj[key] !== 'string' || langObj[key] === '' || langObj[key] === zhCNObj[key]) {
-            needAddList.push([key, zhCNObj[key], '', '']);
-        }
-
-        // allList.push([key, zhCNObj[key], '', _.upperFirst(langObj[key])]);
-        allList.push([key, zhCNObj[key], '', langObj[key]]);
-
-        adjustLangObj[key] = langObj[key] || zhCNObj[key];
+  const langObjKeys = Object.keys(langObj);
+  // 调整后的语言包key/value
+  const adjustLangObj = {};
+  // 需要新增的key/value
+  const needAddList = [];
+  // 全量的的key/value
+  const allList = [];
+  // 循环zh-CN的key，得到当前语言包的key
+  for (let key in zhCNObj) {
+    // 4种情况下，需要将key放入到翻译对象里面去
+    // 1: 这个key不存在当前的语言包key/value中
+    // 2: 语言包的key的value类型不是string
+    // 3: 语言包的key的value值为""
+    // 4: 语言包的key的value和zh-CN的key的value一样
+    if (
+      !langObjKeys.includes(key) ||
+      typeof langObj[key] !== 'string' ||
+      langObj[key] === '' ||
+      langObj[key] === zhCNObj[key]
+    ) {
+      needAddList.push([key, zhCNObj[key], '', '']);
     }
 
-    const addList = await combinText(needAddList, lang);
+    // allList.push([key, zhCNObj[key], '', _.upperFirst(langObj[key])]);
+    allList.push([key, zhCNObj[key], '', langObj[key]]);
 
-    return {
-        fileKeyValueList: getFileKeyValueList(adjustLangObj),
-        addList,
-        allList
-    };
+    adjustLangObj[key] = langObj[key] || zhCNObj[key];
+  }
+
+  const addList = await combinText(needAddList, lang);
+
+  return {
+    fileKeyValueList: getFileKeyValueList(adjustLangObj),
+    addList,
+    allList
+  };
 }
 
 /**
  * 合并需要翻译的中文，因为百度翻译限制一次性中文只能有3000字
  * 因为百度免费翻译有时候会抽风，会导致翻译结果出错，为了减少没被翻译的，所以现在设置一次性翻译200字
- * @param {*} needAddList 
+ * @param {*} needAddList
  */
 async function combinText(needAddList, lang) {
-    const otpConfig = getProjectConfig()
-    const { baiduApiKey, baiduLangMap } = otpConfig || {}
-    const { appId, appKey } = baiduApiKey || {}
-    const toLang = baiduLangMap?.[lang] || '';
+  const otpConfig = getProjectConfig();
+  const { baiduApiKey, baiduLangMap } = otpConfig || {};
+  const { appId, appKey } = baiduApiKey || {};
+  const toLang = baiduLangMap?.[lang] || '';
 
-    if (!Array.isArray(needAddList)) {
-        return []
-    }
+  if (!Array.isArray(needAddList)) {
+    return [];
+  }
 
-    // 如果不配置百度翻译就直接返回
-    if (!appId || !appKey || !toLang) {
-        return needAddList;
-    }
+  // 如果不配置百度翻译就直接返回
+  if (!appId || !appKey || !toLang) {
+    return needAddList;
+  }
 
-    // 分组
-    const groupList = groupByLength(needAddList, 200)
-    // 分组翻译结果
-    const transformResultList = await getTransformResultList(groupList, appId, appKey, 'zh', toLang)
+  // 分组
+  const groupList = groupByLength(needAddList, 200);
+  // 分组翻译结果
+  const transformResultList = await getTransformResultList(groupList, appId, appKey, 'zh', toLang);
 
-    return needAddList.map((i, index) => {
-        i[2] = transformResultList[index];
-        return i
-    })
+  return needAddList.map((i, index) => {
+    i[2] = transformResultList[index];
+    return i;
+  });
 }
 
 /**
  * 对分组的结果进行翻译
- * @param {*} groupList 
- * @param {*} appId 
- * @param {*} appKey 
- * @param {*} fromLang 
- * @param {*} toLang 
- * @returns 
+ * @param {*} groupList
+ * @param {*} appId
+ * @param {*} appKey
+ * @param {*} fromLang
+ * @param {*} toLang
+ * @returns
  */
 async function getTransformResultList(groupList, appId, appKey, fromLang, toLang) {
-    let translatList = []
-    for (const i of groupList) {
-        const baiduResult = await baiduTranslation(appId, appKey, fromLang, toLang, JSON.stringify(i))
+  let translatList = [];
+  for (const i of groupList) {
+    const baiduResult = await baiduTranslation(appId, appKey, fromLang, toLang, JSON.stringify(i));
 
-        try {
-            const splitBaiduResult = baiduResult?.[0]
-            const transResultList = JSON.parse(splitBaiduResult);
-            // 这里是判断百度翻译返回的长度是不是和传入的一样
-            const reduceNum = i.length - transResultList.length;
-            translatList = [...translatList, ...transResultList].concat(Array(reduceNum).fill(''))
-
-        } catch (e) {
-            console.log(`百度翻译出现部分失败, 失败原因: ${e.message}`)
-            translatList = translatList.concat(Array(i.length).fill(''))
-        }
+    try {
+      const splitBaiduResult = baiduResult?.[0];
+      const transResultList = JSON.parse(splitBaiduResult);
+      // 这里是判断百度翻译返回的长度是不是和传入的一样
+      const reduceNum = i.length - transResultList.length;
+      translatList = [...translatList, ...transResultList].concat(Array(reduceNum).fill(''));
+    } catch (e) {
+      console.log(`百度翻译出现部分失败, 失败原因: ${e.message}`);
+      translatList = translatList.concat(Array(i.length).fill(''));
     }
+  }
 
-    return translatList
+  return translatList;
 }
 
 /**
  * 对数组进行分组
  * @param {*} groupList 原数组
  * @param {*} max 最大多少字
- * @returns 
+ * @returns
  */
 function groupByLength(groupList, max) {
-    const list = [[]]
-    let str = ''
-    // 变成${max}个字符一组的数组，用于一次百度翻译
-    groupList.forEach((it) => {
-        let [, text] = it;
+  const list = [[]];
+  let str = '';
+  // 变成${max}个字符一组的数组，用于一次百度翻译
+  groupList.forEach((it) => {
+    let [, text] = it;
 
-        if ((str + text).length < max) {
-            list[list.length - 1] = Array.isArray(list[list.length - 1]) ? [...list[list.length - 1], text] : [text]
-            str = str + text
-        } else {
-            list.push([text])
-            str = ''
-        }
-    })
-    return list
+    if ((str + text).length < max) {
+      list[list.length - 1] = Array.isArray(list[list.length - 1])
+        ? [...list[list.length - 1], text]
+        : [text];
+      str = str + text;
+    } else {
+      list.push([text]);
+      str = '';
+    }
+  });
+  return list;
 }
 
 /**
  * 百度翻译
- * @param {*} from 
- * @param {*} to 
- * @param {*} text 
- * @returns 
+ * @param {*} from
+ * @param {*} to
+ * @param {*} text
+ * @returns
  */
 async function baiduTranslation(appId, appKey, from, to, text) {
-    return new Promise((resolve, reject) => {
-        // 延迟1000ms是因为百度翻译对调用频率有限制
-        setTimeout(() => {
-            return baiduTranslate(appId, appKey, to, from)(text)
-                .then(data => {
-                    if (data && data.trans_result) {
-                        const result = data.trans_result.map(item => item.dst) || [];
-                        resolve(result);
-                    } else {
-                        resolve('[]')
-                    }
-                }).catch(err => {
-                    reject('[]');
-                });
-        }, 1000)
-    })
+  return new Promise((resolve, reject) => {
+    // 延迟1000ms是因为百度翻译对调用频率有限制
+    setTimeout(() => {
+      return baiduTranslate(
+        appId,
+        appKey,
+        to,
+        from
+      )(text)
+        .then((data) => {
+          if (data && data.trans_result) {
+            const result = data.trans_result.map((item) => item.dst) || [];
+            resolve(result);
+          } else {
+            resolve('[]');
+          }
+        })
+        .catch((err) => {
+          reject('[]');
+        });
+    }, 1000);
+  });
 }
 
 /**
@@ -280,11 +292,11 @@ async function baiduTranslation(appId, appKey, from, to, text) {
  * @param {*} adjustLangObj
  */
 function getDistRst(adjustLangObj) {
-    const rst = {};
-    traverse(adjustLangObj, (message, key) => {
-        _.setWith(rst, key, message, Object);
-    });
-    return rst;
+  const rst = {};
+  traverse(adjustLangObj, (message, key) => {
+    _.setWith(rst, key, message, Object);
+  });
+  return rst;
 }
 
 /**
@@ -293,18 +305,18 @@ function getDistRst(adjustLangObj) {
  * @param {*} path 生成的路径
  */
 function generateExcel(addList, path, lang) {
-    const excleData = [['需要翻译的字段', '中文', '百度翻译', '人工翻译'], ...addList];
+  const excleData = [['需要翻译的字段', '中文', '百度翻译', '人工翻译'], ...addList];
 
-    const options = {
-        '!cols': [{ wpx: 100 }, { wpx: 100 }, { wpx: 100 }]
-    };
+  const options = {
+    '!cols': [{ wpx: 100 }, { wpx: 100 }, { wpx: 100 }]
+  };
 
-    const worksheet = XLSX.utils.aoa_to_sheet(excleData);
-    worksheet['!cols'] = options['!cols'];
+  const worksheet = XLSX.utils.aoa_to_sheet(excleData);
+  worksheet['!cols'] = options['!cols'];
 
-    const workbook = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(workbook, worksheet, 'Sheet1');
-    XLSX.writeFile(workbook, `${path}/translate_${lang}.xls`);
+  const workbook = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(workbook, worksheet, 'Sheet1');
+  XLSX.writeFile(workbook, `${path}/translate_${lang}.xls`);
 }
 
 /**
@@ -313,31 +325,61 @@ function generateExcel(addList, path, lang) {
  * @returns {"a.b.c": "test"}
  */
 function parseExcel(path, callback) {
-    if (!shell.test('-e', path)) {
-        console.log('当前目录下没有找到翻译.xls文件');
-        return;
-    }
-    const excelBinary = fs.readFileSync(path);
-    const excel = XLSX.read(excelBinary, {
-        type: 'buffer'
-    });
+  if (!shell.test('-e', path)) {
+    console.log('当前目录下没有找到翻译.xls文件');
+    return;
+  }
+  const excelBinary = fs.readFileSync(path);
+  const excel = XLSX.read(excelBinary, {
+    type: 'buffer'
+  });
 
-    try {
-        const sheet0 = excel.Sheets[excel.SheetNames[0]];
-        const list = XLSX.utils.sheet_to_json(sheet0);
+  try {
+    const sheet0 = excel.Sheets[excel.SheetNames[0]];
+    const list = XLSX.utils.sheet_to_json(sheet0);
 
-        const translateMap = list.reduce((total, item) => {
-            const key = item['需要翻译的字段'];
-            const value = item['人工翻译'];
+    const translateMap = list.reduce((total, item) => {
+      const key = item['需要翻译的字段'];
+      const value = item['人工翻译'];
 
-            total[key] = value;
-            return total;
-        }, {});
+      total[key] = value;
+      return total;
+    }, {});
 
-        callback(translateMap);
-    } catch (e) {
-        console.log(e)
-    }
+    callback(translateMap);
+  } catch (e) {
+    console.log(e);
+  }
+}
+
+/**
+ * 解析excel
+ * @param {*} path excel的路径地址
+ * @returns ["需要翻译的字段", "中文", "百度翻译", "人工翻译"]
+ */
+function parseExcelToArray(path, callback) {
+  if (!shell.test('-e', path)) {
+    console.log('当前目录下没有找到翻译.xls文件');
+    return;
+  }
+  const excelBinary = fs.readFileSync(path);
+  const excel = XLSX.read(excelBinary, {
+    type: 'buffer'
+  });
+
+  try {
+    const sheet0 = excel.Sheets[excel.SheetNames[0]];
+    const list = XLSX.utils.sheet_to_json(sheet0);
+
+    const dataList = list.reduce((total, item) => {
+      total.push([item['需要翻译的字段'], item['中文'], item['百度翻译'], item['人工翻译']]);
+      return total;
+    }, []);
+
+    callback(dataList);
+  } catch (e) {
+    console.log(e);
+  }
 }
 
 /**
@@ -346,13 +388,16 @@ function parseExcel(path, callback) {
  * @param {*} lang
  */
 function rewriteFiles(fileKeyValueList, lang) {
-    // 将新的key/value重新写入
-    if (Array.isArray(fileKeyValueList) && fileKeyValueList.length) {
-        fileKeyValueList.forEach(({ fileName, value }) => {
-            const distRst = getDistRst(value);
-            fs.writeFileSync(`${otpPath}/${lang}/${fileName}.js`, prettierFile('export default ' + JSON.stringify(distRst, null, 2)));
-        });
-    }
+  // 将新的key/value重新写入
+  if (Array.isArray(fileKeyValueList) && fileKeyValueList.length) {
+    fileKeyValueList.forEach(({ fileName, value }) => {
+      const distRst = getDistRst(value);
+      fs.writeFileSync(
+        `${otpPath}/${lang}/${fileName}.js`,
+        prettierFile('export default ' + JSON.stringify(distRst, null, 2))
+      );
+    });
+  }
 }
 
 /**
@@ -362,9 +407,9 @@ function rewriteFiles(fileKeyValueList, lang) {
  * @param {*} changedSuffix 新后缀
  */
 async function changeFileSuffix(filelist, originSuffix, changedSuffix) {
-    for (let i of filelist) {
-        await fs.renameSync(i + originSuffix, i + changedSuffix)
-    }
+  for (let i of filelist) {
+    await fs.renameSync(i + originSuffix, i + changedSuffix);
+  }
 }
 
 /**
@@ -375,35 +420,35 @@ async function changeFileSuffix(filelist, originSuffix, changedSuffix) {
  * @returns
  */
 function getNeedChangeNameFileList(path, originSuffix, fileList = []) {
-    const files = fs.readdirSync(path);
+  const files = fs.readdirSync(path);
 
-    files.forEach(function (file) {
-        const stat = fs.statSync(path + '/' + file);
-        if (stat.isDirectory()) {
-            getNeedChangeNameFileList(path + '/' + file, originSuffix, fileList);
-        }
-        if (stat.isFile() && file.endsWith(originSuffix)) {
-            // 去掉文件后缀，因为后面还要转回来
-            const filename = file.substring(0, file.lastIndexOf('.'));
-            fileList.push(`${path}/${filename}`);
-        }
-    });
-    return fileList;
+  files.forEach(function (file) {
+    const stat = fs.statSync(path + '/' + file);
+    if (stat.isDirectory()) {
+      getNeedChangeNameFileList(path + '/' + file, originSuffix, fileList);
+    }
+    if (stat.isFile() && file.endsWith(originSuffix)) {
+      // 去掉文件后缀，因为后面还要转回来
+      const filename = file.substring(0, file.lastIndexOf('.'));
+      fileList.push(`${path}/${filename}`);
+    }
+  });
+  return fileList;
 }
 
-
 module.exports = {
-    isObj,
-    traverse,
-    otpPath,
-    syncFiles,
-    flatObject,
-    getAdjustLangObjAndAddList,
-    getFileKeyValueList,
-    getDistRst,
-    generateExcel,
-    parseExcel,
-    rewriteFiles,
-    changeFileSuffix,
-    getNeedChangeNameFileList
+  isObj,
+  traverse,
+  otpPath,
+  syncFiles,
+  flatObject,
+  getAdjustLangObjAndAddList,
+  getFileKeyValueList,
+  getDistRst,
+  generateExcel,
+  parseExcel,
+  parseExcelToArray,
+  rewriteFiles,
+  changeFileSuffix,
+  getNeedChangeNameFileList
 };

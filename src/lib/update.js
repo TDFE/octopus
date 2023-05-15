@@ -1,19 +1,17 @@
 'use strict';
-const updateNotifier = require('update-notifier')
+const updateNotifier = require('update-notifier');
 
 const pkg = require('../../package.json');
 
-const interval = 1000 * 60
-
+const interval = 1000 * 60;
 
 const checkUpdate = () => {
+  const notifier = updateNotifier({
+    pkg,
+    updateCheckInterval: interval
+  });
 
-    const notifier = updateNotifier({
-        pkg: pkg,
-        updateCheckInterval: interval
-    })
+  notifier.notify();
+};
 
-    notifier.notify();
-}
-
-module.exports = checkUpdate
+module.exports = checkUpdate;

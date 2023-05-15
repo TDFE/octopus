@@ -21,14 +21,12 @@ const PROJECT_CONFIG = {
     },
     fileSuffix: ['.ts', '.js', '.vue', '.jsx', '.tsx'], //默认只提取当前后缀名
     defaultTranslateKeyApi: 'Pinyin', // 批量提取文案时生成key值时的默认翻译源
-    importI18N: `import I18N from 'src/utils/I18N';`,
-    include:['./src'],
-    exclude:[],
+    importI18N: "import I18N from 'src/utils/I18N';",  // eslint-disable-line
+    include: ['./src'],
+    exclude: [],
     regPath: 'locale', // 正则匹配路径地址使用
-    resourcePath: [
-      "./src/constants/locale"
-    ],
-    reservedKey: ["template", "case"]
+    resourcePath: ['./src/constants/locale'],
+    reservedKey: ['template', 'case']
   },
   langMap: {
     ['en-US']: 'en',
@@ -47,4 +45,4 @@ export default Object.assign({}, {
 module.exports = {
   OCTOPUS_CONFIG_FILE,
   PROJECT_CONFIG
-}
+};

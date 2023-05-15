@@ -2,15 +2,15 @@
  * @author linhuiw
  * @desc 工具方法
  */
-const fs = require("fs");
-const path = require("path");
-const _ = require("lodash");
-const inquirer = require("inquirer");
-const { pinyin } = require("pinyin-pro");
+const fs = require('fs');
+const path = require('path');
+const _ = require('lodash');
+const inquirer = require('inquirer');
+const { pinyin } = require('pinyin-pro');
 const ora = require('ora');
-const { PROJECT_CONFIG, OCTOPUS_CONFIG_FILE } = require("./const");
+const { PROJECT_CONFIG, OCTOPUS_CONFIG_FILE } = require('./const');
 const prettier = require('prettier');
-const colors = require('colors');
+const { failInfo } = require('../utils/colors');
 
 function lookForFiles(dir, fileName) {
   const files = fs.readdirSync(dir);
@@ -88,12 +88,14 @@ function traverse(obj, cb) {
 /**
  * 获取所有文案
  */
-function getAllMessages(lang, filter = { message, key }) {
+function getAllMessages(lang, filter) {
   const srcLangDir = getLangDir(lang);
   let files = fs.readdirSync(srcLangDir);
-  files = files.filter(file => file.endsWith('.ts') && file !== 'index.ts').map(file => path.resolve(srcLangDir, file));
+  files = files
+    .filter((file) => file.endsWith('.ts') && file !== 'index.ts')
+    .map((file) => path.resolve(srcLangDir, file));
 
-  const allMessages = files.map(file => {
+  const allMessages = files.map((file) => {
     const { default: messages } = require(file);
     const fileNameWithoutExt = path.basename(file).split('.')[0];
     const flattenedMessages = {};
@@ -118,7 +120,7 @@ function getAllMessages(lang, filter = { message, key }) {
  */
 function retry(asyncOperation, times = 1) {
   let runTimes = 1;
-  const handleReject = e => {
+  const handleReject = (e) => {
     if (runTimes++ < times) {
       return asyncOperation().catch(handleReject);
     } else {
@@ -176,14 +178,19 @@ function translateKeyText(text, origin) {
       new Promise((resolve, reject) => {
         // Baidu
         if (origin === 'Baidu') {
-          baiduTranslate(appId, appKey, 'en', 'zh')(text)
-            .then(data => {
+          baiduTranslate(
+            appId,
+            appKey,
+            'en',
+            'zh'
+          )(text)
+            .then((data) => {
               if (data && data.trans_result) {
-                const result = data.trans_result.map(item => item.dst) || [];
+                const result = data.trans_result.map((item) => item.dst) || [];
                 resolve(result);
               }
             })
-            .catch(err => {
+            .catch((err) => {
               reject(err);
             });
         }
@@ -243,10 +250,10 @@ async function getTranslateOriginType() {
   const { googleApiKey, baiduApiKey } = getProjectConfig();
   let translateType = ['Google', 'Baidu'];
   if (!googleApiKey) {
-    translateType = translateType.filter(item => item !== 'Google');
+    translateType = translateType.filter((item) => item !== 'Google');
   }
   if (!baiduApiKey || !baiduApiKey.appId || !baiduApiKey.appKey) {
-    translateType = translateType.filter(item => item !== 'Baidu');
+    translateType = translateType.filter((item) => item !== 'Baidu');
   }
   if (translateType.length === 0) {
     console.log('请配置 googleApiKey 或 baiduApiKey ');
@@ -270,7 +277,7 @@ async function getTranslateOriginType() {
   });
   return {
     pass: true,
-    origin: origin
+    origin
   };
 }
 
@@ -295,18 +302,18 @@ function spining(text, callback) {
  * @param fileContent
  */
 function prettierFile(fileContent, proType) {
-    try {
-      return prettier.format(fileContent, {
-        parser: proType === 'vue' ? 'vue' : 'typescript',
-        trailingComma: 'all',
-        singleQuote: true
-      });
-      // return fileContent;
-    } catch (e) {
-      failInfo(`代码格式化报错！${e.toString()}\n代码为：${fileContent}`);
-      return fileContent;
-    }
+  try {
+    return prettier.format(fileContent, {
+      parser: proType === 'vue' ? 'vue' : 'typescript',
+      trailingComma: 'all',
+      singleQuote: true
+    });
+    // return fileContent;
+  } catch (e) {
+    failInfo(`代码格式化报错！${e.toString()}\n代码为：${fileContent}`);
+    return fileContent;
   }
+}
 
 module.exports = {
   getOtpDir,
