@@ -3,7 +3,7 @@
  * @Author: 郑泳健
  * @Date: 2022-06-01 13:56:18
  * @LastEditors: 郑泳健
- * @LastEditTime: 2022-12-28 15:47:31
+ * @LastEditTime: 2023-06-12 11:33:51
  */
 const {
     syncFiles,
@@ -25,6 +25,7 @@ function translate() {
     (async () => {
         const otpConfig = getProjectConfig()
         const distLang = otpConfig && otpConfig.distLangs
+        const baiduApiKey = otpConfig && otpConfig.baiduApiKey
 
         if (!Array.isArray(distLang)) {
             console.log(`请配置${OCTOPUS_CONFIG_FILE}里面的distLangs`)
@@ -42,7 +43,7 @@ function translate() {
             const langFlat = flatObject(currentLangMap);
             spinner.start('正在同步文件的key')
             // 删除掉多余的key，增加新的key，同时提取没有翻译过的key的列表
-            const { fileKeyValueList, addList } = await getAdjustLangObjAndAddList(lang, langFlat, zhCNflat);
+            const { fileKeyValueList, addList } = await getAdjustLangObjAndAddList(lang, langFlat, zhCNflat, baiduApiKey, spinner);
             spinner.succeed('同步文件的key成功')
             // 重写文件
             rewriteFiles(fileKeyValueList, lang);
