@@ -6,6 +6,5 @@ npm-debug.log
 /node_modules
 static
 yarn.lock
-package-lock.json
 /src/temp
 /temp
