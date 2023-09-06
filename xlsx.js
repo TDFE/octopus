@@ -1,4 +1,3 @@
-const fs = require('fs');
 const { read, utils, readFile, writeFile } = require('xlsx');
 
 const wb = readFile('./n.xls');
@@ -16,7 +15,6 @@ for (let index = 0; index < data.length; index++) {
     if (cun) {
         element['人工翻译'] = cun['人工翻译']
     }
-    console.log(element, 'element')
 }
 
 const header = [
@@ -29,4 +27,4 @@ var sheet = utils.aoa_to_sheet(body);
 
 
 utils.book_append_sheet(workbook, sheet, 'sheet名称'); // 向 workbook 中添加 sheet
-writeFile(workbook, 'xxx_translate_en-US.xlsx'); // 导出 workbook
+writeFile(workbook, 'xxx_translate_en-US.xls'); // 导出 workbook
