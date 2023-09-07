@@ -49,7 +49,8 @@ copyright 2022 同盾
   "importI18N": "import I18N from 'src/utils/I18N';",
   "include": [], // 需要翻译的目录&也可以命令行输入参数
   "exclude": [], // 过滤目录&文件
-  "reservedKey": ["template", "case"] // js关键词以及I18N内置方法不能作为目录名，会统一添加td作为前缀
+  "reservedKey": ["template", "case"], // js关键词以及I18N内置方法不能作为目录名，会统一添加td作为前缀
+  "tabSize": number // 如果I18N.template内部有多个变量时，用于空格锁进的个数，默认为4
 }
 ```
 ￼

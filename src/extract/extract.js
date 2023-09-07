@@ -310,6 +310,7 @@ function extractAll({ dirPath, prefix }) {
         successInfo(`${currentFilename} 替换完成，共替换 ${targetStrs.length} 处文案！`);
       })
       .catch((e) => {
+        console.log(e);
         failInfo(e.message);
       });
   };

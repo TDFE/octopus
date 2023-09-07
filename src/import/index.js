@@ -34,7 +34,7 @@ function importExcel() {
     spinner.start('正在从excel开始同步');
     distLang.forEach((lang) => {
       let valueFormat = (v) => v;
-      if (langFormat[lang]) {
+      if (langFormat && langFormat[lang]) {
         valueFormat = (v) => {
           const { upperCaseFirstList = [], valueMap = {} } = langFormat[lang] || {};
           if (upperCaseFirstList.includes(v)) {

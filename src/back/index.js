@@ -3,7 +3,7 @@
  * @Author: 郑泳健
  * @Date: 2022-06-01 13:56:18
  * @LastEditors: 郑泳健
- * @LastEditTime: 2023-01-11 17:23:29
+ * @LastEditTime: 2023-01-18 15:25:47
  */
 const path = require('path');
 const fs = require('fs');
@@ -122,7 +122,7 @@ function getValueByI18N(filePath, str, flatObj) {
     }
 
     const matchList = matchs.reduce((total, item) => {
-      if (!item.includes('I18N.template') && !item.includes('I18N.setLang')) {
+      if (!['I18N.template', 'I18N.setLang'].includes(item)) {
         const text = flatObj[item.replace('I18N.', '')];
         if (text) {
           total.push({ key: item, value: text });
@@ -157,6 +157,8 @@ function getNeedRewriteFiles(filePath, flatObj) {
     if (Array.isArray(matchList) && matchList.length) {
       sum += matchList.length;
       matchList.forEach(({ key, value }) => {
+        // 兼容翻译的文案中有\n \r \t 这种情况
+        value = value.replace(/\n/g, '\\n').replace(/\r/g, '\\r').replace(/\t/g, '\\t');
         const replaceVal = value && value.includes('\'') ? '"' + value + '"' : '\'' + value + '\'';
         code = code.replace(key, replaceVal);
       });

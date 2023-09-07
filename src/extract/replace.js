@@ -166,6 +166,29 @@ function createImportI18N(filePath) {
 }
 
 /**
+ * 判断I18N.template所在行前面有多少个空格/tab，以及类型是tab还是空格
+ * @param {*} code
+ * @param {*} text
+ * @returns { tabSize: number, isSpace: bool } || null
+ */
+function getLineTableSize(code, line) {
+  try {
+    const list = code ? code.split('\n') : [];
+    const str = list[line];
+    // 用于判断是空格还是space
+    const match = str.match(/^[ \t]+/);
+    // 判断空格/tab的个数
+    let spaces = str.match(/^\s+/);
+    return {
+      tabSize: spaces[0].length,
+      isSpace: match[0].startsWith(' ')
+    };
+  } catch (e) {
+    return null;
+  }
+}
+
+/**
  * 更新文件
  * @param filePath 当前文件路径
  * @param arg  目标字符串对象
@@ -202,7 +225,19 @@ function replaceAndUpdate(filePath, arg, val, validateDuplicate, needWrite = tru
         const kvPair = varInStr.map((str, index) => {
           return `val${index + 1}: ${str.replace(/^\${([^\}]+)\}$/, '$1')}`;
         });
-        finalReplaceVal = `I18N.template(${val}, { ${kvPair.join(',\n')} })`;
+
+        // 多个变量情况下格式化
+        const { tabSize, isSpace } = getLineTableSize(code, arg.line) || {};
+        if (kvPair.length > 1 && !isNaN(tabSize)) {
+          const space =
+            '\n' + (isSpace ? ' ' : '\t').repeat(tabSize + (isSpace ? CONFIG.tabSize || 4 : 1));
+          const startSpace = '\n' + (isSpace ? ' ' : '\t').repeat(tabSize);
+          finalReplaceVal = `I18N.template(${val}, {${space}${kvPair.join(
+            `,${space}`
+          )}${startSpace}})`;
+        } else {
+          finalReplaceVal = `I18N.template(${val}, { ${kvPair.join(',\n')} })`;
+        }
 
         varInStr.forEach((str, index) => {
           finalReplaceText = finalReplaceText.replace(str, `{val${index + 1}}`);

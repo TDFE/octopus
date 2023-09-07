@@ -1,5 +1,6 @@
 const fs = require('fs');
 const { otpPath } = require('./translate');
+const { getLangData } = require('../extract/getLangData');
 
 module.exports = (lang) => {
   try {
@@ -8,9 +9,7 @@ module.exports = (lang) => {
     list.forEach((i) => {
       const suffixCheck = ['.js', '.ts', '.jsx', 'tsx'].some((it) => i.endsWith(it));
       if (suffixCheck && !['index.js', 'index.jsx', 'index.ts', 'index.tsx'].includes(i)) {
-        const str = fs.readFileSync(`${otpPath}/${lang}/${i}`, 'utf-8');
-        const replaceStr = str.replace(/export default|\;/g, '');
-        const json = eval('(' + replaceStr + ')');
+        const json = getLangData(`${otpPath}/${lang}/${i}`);
         const key = i.split('.')[0];
 
         langMap[key] = json;
