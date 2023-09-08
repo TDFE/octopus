@@ -10,10 +10,15 @@ const olddata = utils.sheet_to_json(oldws); // generate objects
 for (let index = 0; index < data.length; index++) {
     const element = data[index];
     const cun =  olddata.find(res => {
+        return res['中文'] === element['中文'] || res['需要翻译的字段'] === element['需要翻译的字段']
+    })
+    const cun2 =  olddata.find(res => {
         return res['中文'] === element['中文']
     })
     if (cun) {
         element['人工翻译'] = cun['人工翻译']
+    } else if (cun2) {
+        element['人工翻译'] = cun2['人工翻译']
     }
 }
 
