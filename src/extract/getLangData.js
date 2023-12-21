@@ -5,7 +5,7 @@
 
 const CONFIG = getProjectConfig();
 const LANG_DIR = path.resolve(CONFIG.otpDir, CONFIG.srcLang);
-const I18N_GLOB = `${LANG_DIR}/**/*.`;
+const I18N_GLOB = `${LANG_DIR}/**/*.js`;
 
 /**
  * 获取对应文件的语言
@@ -44,8 +44,8 @@ function getI18N() {
     const filename = curr
       .split('/')
       .pop()
-      .replace(/\.tsx?$/, '');
-    if (filename.replace(/\.tsx?/, '') === 'index') {
+      .replace(/\.js?$/, '');
+    if (filename.replace(/\.js?/, '') === 'index') {
       return prev;
     }
 
