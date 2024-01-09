@@ -7,13 +7,16 @@
  */
 const path = require('path')
 const fs = require('fs')
-const ts = require('typescript');
 const shell = require('shelljs');
 const { getSpecifiedFiles, isFile } = require('../utils/file')
 const syncLang = require('../utils/syncLang')
 const { flatObject } = require('../utils/translate');
 const { failInfo, highlightText } = require('../utils/colors');
 const { getProjectConfig } = require('../utils/index')
+
+function formatExclude(exclude){
+    return (exclude || []).map(p => path.resolve(process.cwd(), p));
+}
 
 // 匹配I18N.
 const I18N_REGEX = /I18N(\.[a-zA-Z0-9_]+)+/g
@@ -38,7 +41,7 @@ function getFilePaths() {
 
     dirArr.forEach(i => {
         const dirPath = path.resolve(process.cwd(), i);
-        const files = getSpecifiedFiles(dirPath)
+        const files = getSpecifiedFiles(dirPath, formatExclude(CONFIG.exclude))
         filePaths = filePaths.concat(files)
     })
 
