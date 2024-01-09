@@ -299,7 +299,7 @@ function generateExcel(addList, path, lang) {
     const excleData = [['需要翻译的字段', '中文', '百度翻译', '人工翻译'], ...addList];
 
     const options = {
-        '!cols': [{ wpx: 100 }, { wpx: 100 }, { wpx: 100 }]
+        '!cols': [{ wpx: 100 }, { wpx: 100 }, { wpx: 100 }, { wpx: 100 }]
     };
 
     const worksheet = XLSX.utils.aoa_to_sheet(excleData);

@@ -8,3 +8,6 @@ static
 yarn.lock
 /src/temp
 /temp
+/src1
+.octopus
+otp-config.json
