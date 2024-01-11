@@ -30,8 +30,9 @@ function importExcel() {
         }
 
         spinner.start('正在从excel开始同步')
-        distLang.forEach((lang) => {
-            parseExcel(otpPath + `/${lang}/translate_${lang}.xls`, function (translateMap) {
+        distLang.concat("zh-CN").forEach((lang) => {
+            let isZhCN = lang === "zh-CN"
+            parseExcel(otpPath + `/${isZhCN ? "en-US" : lang}/translate_${isZhCN ? "en-US" : lang}.xls`, function (translateMap) {
                 const currentLangMap = syncLang(lang);
                 const langFlat = flatObject(currentLangMap);
 
@@ -43,7 +44,7 @@ function importExcel() {
 
                 // 重新生成翻译文件
                 rewriteFiles(fileKeyValueList, lang);
-            });
+            }, isZhCN);
         })
         spinner.succeed('从excel同步成功')
     })()

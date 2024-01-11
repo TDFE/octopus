@@ -154,8 +154,8 @@ async function getAdjustLangObjAndAddList(lang, langObj = {}, zhCNObj = {}, baid
 
         adjustLangObj[key] = langObj[key] || zhCNObj[key];
     }
-    if(baiduApiKey) {
-      spinner.text = `当前配置了百度翻译，预计翻译时间需要${(needAddList.length / 60)?.toFixed(2)}分钟，如果等不及，请先去掉百度翻译配置`
+    if (baiduApiKey) {
+        spinner.text = `当前配置了百度翻译，预计翻译时间需要${(needAddList.length / 60)?.toFixed(2)}分钟，如果等不及，请先去掉百度翻译配置`
     }
     const addList = await combinText(needAddList, lang, spinner);
 
@@ -315,7 +315,7 @@ function generateExcel(addList, path, lang) {
  * @param {*} path excel的路径地址
  * @returns {"a.b.c": "test"}
  */
-function parseExcel(path, callback) {
+function parseExcel(path, callback, isZhCN = false) {
     if (!shell.test('-e', path)) {
         console.log('当前目录下没有找到翻译.xls文件');
         return;
@@ -331,8 +331,12 @@ function parseExcel(path, callback) {
 
         const translateMap = list.reduce((total, item) => {
             const key = item['需要翻译的字段'];
-            const value = item['人工翻译'];
-
+            let value
+            if (isZhCN) {
+                value = item['中文'];
+            } else {
+                value = item['人工翻译'];
+            }
             total[key] = value;
             return total;
         }, {});

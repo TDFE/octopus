@@ -22,13 +22,14 @@ const PROJECT_CONFIG = {
     fileSuffix: ['.ts', '.js', '.vue', '.jsx', '.tsx'], //默认只提取当前后缀名
     defaultTranslateKeyApi: 'Pinyin', // 批量提取文案时生成key值时的默认翻译源
     importI18N: `import I18N from 'src/utils/I18N';`,
-    include:['./src'],
-    exclude:[],
+    include: ['./src'],
+    exclude: [],
     regPath: 'locale', // 正则匹配路径地址使用
     resourcePath: [
       "./src/constants/locale"
     ],
-    reservedKey: ["template", "case"]
+    reservedKey: ["template", "case"],
+    downloadUrl: "http://sinan-dev.tongdun.me:8088/api/i18n/queryConfig?code=" + "应用code" + "&projectId=" + "项目id"
   },
   langMap: {
     ['en-US']: 'en',
