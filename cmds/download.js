@@ -9,7 +9,7 @@ const { OCTOPUS_CONFIG_FILE } = require('../src/utils/const')
 
 exports.command = 'download';
 
-exports.describe = 'download';
+exports.describe = 'download 正确配置downloadUrl里的code与projectId后执行，可以从司南下载翻译文档xls到本地目录';
 
 exports.handler = async (argv) => {
     const config = getProjectConfig();
