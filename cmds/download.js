@@ -3,8 +3,6 @@ const axios = require('axios');
 const XLSX = require('xlsx');
 const path = require('path');
 
-const { isString } = require('lodash');
-const { extractAll } = require('../src/resource/extract');
 const { getProjectConfig } = require('../src/utils');
 const { convertJsonToXlsx } = require('../src/download');
 const { OCTOPUS_CONFIG_FILE } = require('../src/utils/const')
@@ -15,8 +13,8 @@ exports.describe = 'download';
 
 exports.handler = async (argv) => {
     const config = getProjectConfig();
-    const otpPath = path.resolve(process.cwd(), getProjectConfig().otpDir);
-    const url = getProjectConfig().downloadUrl
+    const otpPath = path.resolve(process.cwd(), config.otpDir);
+    const url = config.downloadUrl
     let lang = "en-US"
     if (!url) {
         console.log(`请配置${OCTOPUS_CONFIG_FILE}里面的downloadUrl`)
