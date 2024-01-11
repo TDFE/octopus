@@ -22,7 +22,6 @@ exports.handler = async (argv) => {
         console.log(`请配置${OCTOPUS_CONFIG_FILE}里面的downloadUrl`)
         return;
     }
-    // let url = "http://sinan-dev.tongdun.me:8088/api/i18n/queryConfig?code=12312312312312312321312&projectId=1175"
     axios.get(url)
         .then((response) => {
             // 给目录和翻译文件item赋值
@@ -45,6 +44,8 @@ exports.handler = async (argv) => {
         })
         .catch((error) => {
             console.error(`Error: ${error.message}`);
+            console.error(`请正确配置downloadUrl里的code与projectId`);
+
         });
 }
 

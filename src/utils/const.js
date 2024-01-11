@@ -29,7 +29,7 @@ const PROJECT_CONFIG = {
       "./src/constants/locale"
     ],
     reservedKey: ["template", "case"],
-    downloadUrl: "http://sinan-dev.tongdun.me:8088/api/i18n/queryConfig?code=" + "应用code" + "&projectId=" + "项目id"
+    downloadUrl: "https://sinan.tongdun.me/api/i18n/queryConfig?code=&projectId="
   },
   langMap: {
     ['en-US']: 'en',
