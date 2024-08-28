@@ -15,35 +15,39 @@ exports.handler = async (argv) => {
     const config = getProjectConfig();
     const otpPath = path.resolve(process.cwd(), config.otpDir);
     const url = config.downloadUrl
-    let lang = "en-US"
+    let distLangs = config.distLangs
+    // let lang = "en-US"
     if (!url) {
         console.log(`请配置${OCTOPUS_CONFIG_FILE}里面的downloadUrl`)
         return;
     }
+
     axios.get(url)
         .then((response) => {
-            // 给目录和翻译文件item赋值
-            const jsonData = response?.data?.data?.jsonData?.children || [];
-            // 将嵌套的 JSON 数据转换为 node-xlsx 格式
-            const xlsxData = convertJsonToXlsx(jsonData, module);
+            distLangs?.map(lang => {
+                // 给目录和翻译文件item赋值
+                const jsonData = response?.data?.data?.jsonData?.children || [];
+                // 将嵌套的 JSON 数据转换为 node-xlsx 格式
+                const xlsxData = convertJsonToXlsx(jsonData, lang);
 
-            const options = {
-                '!cols': [{ wpx: 100 }, { wpx: 100 }, { wpx: 100 }, { wpx: 100 }]
-            };
+                const options = {
+                    '!cols': [{ wpx: 100 }, { wpx: 100 }, { wpx: 100 }, { wpx: 100 }]
+                };
 
-            const worksheet = XLSX.utils.aoa_to_sheet(xlsxData[0]?.data);
-            worksheet['!cols'] = options['!cols'];
+                const worksheet = XLSX.utils.aoa_to_sheet(xlsxData[0]?.data);
+                worksheet['!cols'] = options['!cols'];
 
-            const workbook = XLSX.utils.book_new();
-            XLSX.utils.book_append_sheet(workbook, worksheet, 'Sheet1');
-            XLSX.writeFile(workbook, `${otpPath}/${lang}/translate_${lang}.xls`);
-            console.log(`下载成功`)
-
+                const workbook = XLSX.utils.book_new();
+                XLSX.utils.book_append_sheet(workbook, worksheet, 'Sheet1');
+                XLSX.writeFile(workbook, `${otpPath}/${lang}/translate_${lang}.xls`);
+                console.log(`下载成功`)
+            })
         })
         .catch((error) => {
             console.error(`Error: ${error.message}`);
             console.error(`请正确配置downloadUrl里的code与projectId`);
 
         });
+
 }
 

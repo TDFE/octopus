@@ -1,6 +1,12 @@
-const convertJsonToXlsx = (data, n) => {
+const convertJsonToXlsx = (data, lang) => {
+    let langMap = {
+        "zh-TW": "繁体中文",
+        "en-US": "英文",
+        "fr-FR": "法语",
+    }
+    let module = ["中文"]
+    module.push(langMap[lang])
 
-    let module = ["中文", "英文"]
     const result = [{ name: 'Sheet1', data: [['需要翻译的字段'].concat(["中文", "人工翻译"])] }];
 
     const traverse = (node) => {
