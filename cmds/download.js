@@ -16,7 +16,6 @@ exports.handler = async (argv) => {
     const otpPath = path.resolve(process.cwd(), config.otpDir);
     const url = config.downloadUrl
     let distLangs = config.distLangs
-    // let lang = "en-US"
     if (!url) {
         console.log(`请配置${OCTOPUS_CONFIG_FILE}里面的downloadUrl`)
         return;
