@@ -5,7 +5,7 @@ const { getProjectConfig, flatten } = require('../utils');
 
 const CONFIG = getProjectConfig();
 const LANG_DIR = path.resolve(CONFIG.otpDir, CONFIG.srcLang);
-const I18N_GLOB = `${LANG_DIR}/**/*.`;
+const I18N_GLOB = `${LANG_DIR}/**/*.js`;
 
 /**
  * 获取对应文件的语言
@@ -23,6 +23,9 @@ function getLangData(fileName) {
  */
 function getLangJson(fileName) {
   const fileContent = fs.readFileSync(fileName, { encoding: 'utf8' });
+  if(!fileContent) {
+    return {}
+  }
   let obj = fileContent.match(/export\s*default\s*({[\s\S]+);?$/)[1];
   obj = obj.replace(/\s*;\s*$/, '');
   let jsObj = {};
@@ -41,8 +44,8 @@ function getI18N() {
     const filename = curr
       .split('/')
       .pop()
-      .replace(/\.tsx?$/, '');
-    if (filename.replace(/\.tsx?/, '') === 'index') {
+      .replace(/\.js?$/, '');
+    if (filename.replace(/\.js?/, '') === 'index') {
       return prev;
     }
 

@@ -3,7 +3,7 @@
  * @Author: 郑泳健
  * @Date: 2022-06-02 10:09:01
  * @LastEditors: 郑泳健
- * @LastEditTime: 2023-01-04 14:54:06
+ * @LastEditTime: 2023-06-12 11:32:52
  */
 const fs = require('fs');
 const path = require('path');
@@ -130,12 +130,12 @@ function getFileKeyValueList(adjustLangObj) {
  * @param {*} zhCNObj zh-CN 的key/value
  * @returns { fileKeyValueList: [{fileName: a, value: {"b.c": xx}}], addList: [["a.b.c": "dd"]] }
  */
-async function getAdjustLangObjAndAddList(lang, langObj = {}, zhCNObj = {}) {
+async function getAdjustLangObjAndAddList(lang, langObj = {}, zhCNObj = {}, baiduApiKey, spinner) {
   const langObjKeys = Object.keys(langObj);
   // 调整后的语言包key/value
   const adjustLangObj = {};
   // 需要新增的key/value
-  const needAddList = [];
+  let needAddList = [];
   // 全量的的key/value
   const allList = [];
   // 循环zh-CN的key，得到当前语言包的key
@@ -159,8 +159,12 @@ async function getAdjustLangObjAndAddList(lang, langObj = {}, zhCNObj = {}) {
 
     adjustLangObj[key] = langObj[key] || zhCNObj[key];
   }
-
-  const addList = await combinText(needAddList, lang);
+  if (baiduApiKey) {
+    spinner.text = `当前配置了百度翻译，预计翻译时间需要${(needAddList.length / 60)?.toFixed(
+      2
+    )}分钟，如果等不及，请先去掉百度翻译配置`;
+  }
+  const addList = await combinText(needAddList, lang, spinner);
 
   return {
     fileKeyValueList: getFileKeyValueList(adjustLangObj),
@@ -174,7 +178,7 @@ async function getAdjustLangObjAndAddList(lang, langObj = {}, zhCNObj = {}) {
  * 因为百度免费翻译有时候会抽风，会导致翻译结果出错，为了减少没被翻译的，所以现在设置一次性翻译200字
  * @param {*} needAddList
  */
-async function combinText(needAddList, lang) {
+async function combinText(needAddList, lang, spinner) {
   const otpConfig = getProjectConfig();
   const { baiduApiKey, baiduLangMap } = otpConfig || {};
   const { appId, appKey } = baiduApiKey || {};
@@ -188,11 +192,17 @@ async function combinText(needAddList, lang) {
   if (!appId || !appKey || !toLang) {
     return needAddList;
   }
-
   // 分组
   const groupList = groupByLength(needAddList, 200);
   // 分组翻译结果
-  const transformResultList = await getTransformResultList(groupList, appId, appKey, 'zh', toLang);
+  const transformResultList = await getTransformResultList(
+    groupList,
+    appId,
+    appKey,
+    'zh',
+    toLang,
+    spinner
+  );
 
   return needAddList.map((i, index) => {
     i[2] = transformResultList[index];
@@ -209,23 +219,24 @@ async function combinText(needAddList, lang) {
  * @param {*} toLang
  * @returns
  */
-async function getTransformResultList(groupList, appId, appKey, fromLang, toLang) {
+async function getTransformResultList(groupList, appId, appKey, fromLang, toLang, spinner) {
   let translatList = [];
+  let num = 1;
   for (const i of groupList) {
+    spinner.text = `翻译进度${num}/${groupList.length}`;
     const baiduResult = await baiduTranslation(appId, appKey, fromLang, toLang, JSON.stringify(i));
-
+    num++;
     try {
-      const splitBaiduResult = baiduResult?.[0];
-      const transResultList = JSON.parse(splitBaiduResult);
-      // 这里是判断百度翻译返回的长度是不是和传入的一样
-      const reduceNum = i.length - transResultList.length;
-      translatList = [...translatList, ...transResultList].concat(Array(reduceNum).fill(''));
+      const res = baiduResult?.[0];
+      // const transResultList = JSON.parse(splitBaiduResult);
+      // // 这里是判断百度翻译返回的长度是不是和传入的一样
+      // const reduceNum = i.length - transResultList.length;
+      translatList = [...translatList, res];
     } catch (e) {
       console.log(`百度翻译出现部分失败, 失败原因: ${e.message}`);
-      translatList = translatList.concat(Array(i.length).fill(''));
+      translatList = translatList.concat('');
     }
   }
-
   return translatList;
 }
 
@@ -240,17 +251,15 @@ function groupByLength(groupList, max) {
   let str = '';
   // 变成${max}个字符一组的数组，用于一次百度翻译
   groupList.forEach((it) => {
-    let [, text] = it;
-
-    if ((str + text).length < max) {
-      list[list.length - 1] = Array.isArray(list[list.length - 1])
-        ? [...list[list.length - 1], text]
-        : [text];
-      str = str + text;
-    } else {
-      list.push([text]);
-      str = '';
-    }
+    const [, text] = it;
+    list.push(text);
+    // if ((str + text).length < max) {
+    //     list[list.length - 1] = Array.isArray(list[list.length - 1]) ? [...list[list.length - 1], text] : [text]
+    //     str = str + text
+    // } else {
+    //     list.push([text])
+    //     str = ''
+    // }
   });
   return list;
 }
@@ -274,16 +283,16 @@ async function baiduTranslation(appId, appKey, from, to, text) {
       )(text)
         .then((data) => {
           if (data && data.trans_result) {
-            const result = data.trans_result.map((item) => item.dst) || [];
+            const result = data.trans_result.map((item) => item.dst) || '';
             resolve(result);
           } else {
-            resolve('[]');
+            resolve('');
           }
         })
         .catch((err) => {
-          reject('[]');
+          reject('');
         });
-    }, 1000);
+    }, 1100);
   });
 }
 
@@ -308,7 +317,7 @@ function generateExcel(addList, path, lang) {
   const excleData = [['需要翻译的字段', '中文', '百度翻译', '人工翻译'], ...addList];
 
   const options = {
-    '!cols': [{ wpx: 100 }, { wpx: 100 }, { wpx: 100 }]
+    '!cols': [{ wpx: 100 }, { wpx: 100 }, { wpx: 100 }, { wpx: 100 }]
   };
 
   const worksheet = XLSX.utils.aoa_to_sheet(excleData);
@@ -324,7 +333,7 @@ function generateExcel(addList, path, lang) {
  * @param {*} path excel的路径地址
  * @returns {"a.b.c": "test"}
  */
-function parseExcel(path, callback) {
+function parseExcel(path, callback, isZhCN = false) {
   if (!shell.test('-e', path)) {
     console.log('当前目录下没有找到翻译.xls文件');
     return;
@@ -340,8 +349,12 @@ function parseExcel(path, callback) {
 
     const translateMap = list.reduce((total, item) => {
       const key = item['需要翻译的字段'];
-      const value = item['人工翻译'];
-
+      let value;
+      if (isZhCN) {
+        value = item['中文'];
+      } else {
+        value = item['人工翻译'];
+      }
       total[key] = value;
       return total;
     }, {});
