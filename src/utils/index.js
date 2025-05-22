@@ -237,44 +237,6 @@ function flatten(obj, prefix = '') {
 }
 
 /**
- * 获取翻译源类型
- */
-async function getTranslateOriginType() {
-  const { googleApiKey, baiduApiKey } = getProjectConfig();
-  let translateType = ['Google', 'Baidu'];
-  if (!googleApiKey) {
-    translateType = translateType.filter(item => item !== 'Google');
-  }
-  if (!baiduApiKey || !baiduApiKey.appId || !baiduApiKey.appKey) {
-    translateType = translateType.filter(item => item !== 'Baidu');
-  }
-  if (translateType.length === 0) {
-    console.log('请配置 googleApiKey 或 baiduApiKey ');
-    return {
-      pass: false,
-      origin: ''
-    };
-  }
-  if (translateType.length == 1) {
-    return {
-      pass: true,
-      origin: translateType[0]
-    };
-  }
-  const { origin } = await inquirer.prompt({
-    type: 'list',
-    name: 'origin',
-    message: '请选择使用的翻译源',
-    default: 'Google',
-    choices: ['Google', 'Baidu']
-  });
-  return {
-    pass: true,
-    origin: origin
-  };
-}
-
-/**
  * 进度条加载
  * @param text
  * @param callback
@@ -321,7 +283,6 @@ module.exports = {
   findMatchValue,
   flatten,
   lookForFiles,
-  getTranslateOriginType,
   translateKeyText,
   spining,
   prettierFile

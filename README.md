@@ -23,6 +23,10 @@ otp <cmd> [-args]
   otp init                        init 初始化配置文件
   otp translate                   translate 通过对比zh-CN目录,获取各语言未翻译的
                                   部分,并生成excel文件
+  otp back                        回滚国际化翻译
+  otp download                    下载思南翻译到本地-需要配置downloadUrl
+  otp reduce                      校验数据，删除多余的翻译
+  otp knowledge                   knowledge 导出所有文件,并生成知识库的excel文件
 
 选项：
   -v, --version  显示版本号                                               [布尔]
@@ -43,6 +47,7 @@ copyright 2022 同盾
   "googleApiKey": "", // google翻译 这期没做
   "baiduApiKey": { "appId": "", "appKey": "" }, // 百度翻译 这期没做
   "baiduLangMap": { "en-US": "en" }, // 百度翻译 这期没做
+  "difyApiKey": { "appUrl": "", "appKey": "" }, // dify翻译
   "translateOptions": { "concurrentLimit": 10, "requestOptions": {} }, // google翻译 这期没做
   "fileSuffix": [".ts", ".js", ".vue", ".jsx", ".tsx"], // 支持符合JS语法的后缀名
   "defaultTranslateKeyApi": "Pinyin", // 默认生成的JSON key 使用拼音前5个

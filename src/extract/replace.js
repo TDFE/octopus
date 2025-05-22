@@ -9,7 +9,6 @@ const {
   findMatchKey,
   findMatchValue,
   getLangDir,
-  translateKeyText,
   getProjectConfig,
   prettierFile
 } = require('../utils');

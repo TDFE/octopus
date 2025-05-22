@@ -12,6 +12,10 @@ const PROJECT_CONFIG = {
       appId: '',
       appKey: ''
     },
+    difyApiKey: {
+      apiUrl: '',
+      appKey: ''
+    },
     baiduLangMap: {
       ['en-US']: 'en'
     },

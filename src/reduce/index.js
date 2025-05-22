@@ -66,7 +66,7 @@ function main() {
             const langFlat = flatObject(currentLangMap);
             spinner.start(`正在清理${lang}下多余的key`)
             // 删除掉多余的key，增加新的key，同时提取没有翻译过的key的列表
-            const { fileKeyValueList, addList } = await getAdjustLangObjAndAddList(lang, langFlat, result, '', spinner);
+            const { fileKeyValueList } = await getAdjustLangObjAndAddList({ lang, langObj: langFlat, zhCNObj: result, spinner });
             spinner.succeed(`已完成清理${lang}下多余的key`)
             // 重写文件
             rewriteFiles(fileKeyValueList, lang);

@@ -4,7 +4,7 @@ const path = require('path');
 const Parser = require('properties');
 
 const { getSpecifiedFiles, readFile, writeFile, isFile, isDirectory } = require('../utils/file');
-const { translateText, findMatchKey, findMatchValue, translateKeyText, getProjectConfig } = require('../utils');
+const { translateText, findMatchKey, findMatchValue, getProjectConfig } = require('../utils');
 const { successInfo, failInfo, highlightText } = require('../utils/colors');
 
 const CONFIG = getProjectConfig();

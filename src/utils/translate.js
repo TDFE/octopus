@@ -130,7 +130,9 @@ function getFileKeyValueList(adjustLangObj) {
  * @param {*} zhCNObj zh-CN 的key/value
  * @returns { fileKeyValueList: [{fileName: a, value: {"b.c": xx}}], addList: [["a.b.c": "dd"]] }
  */
-async function getAdjustLangObjAndAddList(lang, langObj = {}, zhCNObj = {}, baiduApiKey, spinner) {
+async function getAdjustLangObjAndAddList({
+    lang, langObj = {}, zhCNObj = {}, baiduApiKey, difyApiKey, spinner
+}) {
     const langObjKeys = Object.keys(langObj);
     // 调整后的语言包key/value
     const adjustLangObj = {};
@@ -154,10 +156,8 @@ async function getAdjustLangObjAndAddList(lang, langObj = {}, zhCNObj = {}, baid
 
         adjustLangObj[key] = langObj[key] || zhCNObj[key];
     }
-    if (baiduApiKey) {
-        spinner.text = `当前配置了百度翻译，预计翻译时间需要${(needAddList.length / 60)?.toFixed(2)}分钟，如果等不及，请先去掉百度翻译配置`
-    }
-    const addList = await combinText(needAddList, lang, spinner);
+
+    const addList = await combineText({ needAddList, lang, spinner, baiduApiKey, difyApiKey });
 
     return {
         fileKeyValueList: getFileKeyValueList(adjustLangObj),
@@ -171,20 +171,28 @@ async function getAdjustLangObjAndAddList(lang, langObj = {}, zhCNObj = {}, baid
  * 因为百度免费翻译有时候会抽风，会导致翻译结果出错，为了减少没被翻译的，所以现在设置一次性翻译200字
  * @param {*} needAddList
  */
-async function combinText(needAddList, lang, spinner) {
-    const otpConfig = getProjectConfig()
-    const { baiduApiKey, baiduLangMap } = otpConfig || {}
-    const { appId, appKey } = baiduApiKey || {}
-    const toLang = baiduLangMap?.[lang] || '';
-
+async function combineText({ needAddList, lang, spinner, baiduApiKey, difyApiKey }) {
     if (!Array.isArray(needAddList)) {
         return []
     }
+    const otpConfig = getProjectConfig();
+    const { baiduLangMap } = otpConfig || {};
+
+    const _difyApiKey = difyApiKey || {};
+    if (_difyApiKey.appUrl && _difyApiKey.appKey) {
+        spinner.text = `当前配置了dify翻译，预计翻译时间需要${(needAddList.length / 9)?.toFixed(2)}分钟，如果等不及，请先去掉dify翻译配置`;
+        const backList = await difyTranslate({ needAddList, spinner, appUrl: _difyApiKey.appUrl, appKey: _difyApiKey.appKey });
+        return backList;
+    }
+
+    const { appId, appKey } = baiduApiKey || {}
+    const toLang = baiduLangMap?.[lang] || '';
 
     // 如果不配置百度翻译就直接返回
     if (!appId || !appKey || !toLang) {
         return needAddList;
     }
+    spinner.text = `当前配置了百度翻译，预计翻译时间需要${(needAddList.length / 60)?.toFixed(2)}分钟，如果等不及，请先去掉百度翻译配置`
     // 分组
     const groupList = groupByLength(needAddList, 200)
     // 分组翻译结果
@@ -193,6 +201,64 @@ async function combinText(needAddList, lang, spinner) {
     return needAddList.map((i, index) => {
         i[2] = transformResultList[index];
         return i
+    })
+}
+
+function difyTranslate({ needAddList, spinner, appUrl, appKey, maxLength = 10 }) {
+    return new Promise((resolve, reject) => {
+        const cacheMap = {};
+        const textList = needAddList.map(i => i[1]);
+        // 当前任务的索引
+        let index = -1;
+        // 当前正在执行的任务数
+        let runningTasks = 0;
+        // 已完成的任务数
+        let completedTasks = 0;
+        const processTask = () => {
+            index++;
+            const text = textList[index];
+            if (!text) {
+                if (runningTasks === 0) {
+                    resolve(needAddList.map(arr => {
+                        arr[3] = cacheMap[arr[1]] || '';
+                        return arr;
+                    }))
+                }
+                return
+            }
+            runningTasks++;
+            fetch(`${appUrl}/workflows/run`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${appKey}`
+                },
+                body: JSON.stringify({
+                    inputs: {
+                        query: text,
+                    },
+                    user: 'admin',
+                    response_mode: 'blocking'
+                })
+            }).then(res => res.json())
+            .then(res => {
+                if (res?.data?.outputs?.result) {
+                    cacheMap[text] = res.data.outputs.result;
+                }
+                completedTasks++;
+                spinner.text = `Dify翻译进度: ${completedTasks}/${textList.length}, 当前并发数: ${maxLength}`;
+            })
+            .catch((error)=>{
+                console.log('Dify翻译失败: ', error);
+            })
+            .finally(() => {
+                runningTasks--;
+                processTask();
+            });
+        };
+        for (let i = 0; i < maxLength; i++) {
+            processTask();
+        }
     })
 }
 
@@ -235,7 +301,7 @@ async function getTransformResultList(groupList, appId, appKey, fromLang, toLang
  * @returns
  */
 function groupByLength(groupList, max) {
-    const list = [[]]
+    const list = []
     let str = ''
     // 变成${max}个字符一组的数组，用于一次百度翻译
     groupList.forEach((it) => {
@@ -295,14 +361,14 @@ function getDistRst(adjustLangObj) {
  * @param {*} addList 需要翻译的列表
  * @param {*} path 生成的路径
  */
-function generateExcel(addList, path, lang) {
-    const excleData = [['需要翻译的字段', '中文', '百度翻译', '人工翻译'], ...addList];
+function generateExcel(addList, path, lang, isKnowledge) {
+    const excelData = [isKnowledge ? ['中文', '人工翻译'] : ['需要翻译的字段', '中文', '百度翻译', '人工翻译'], ...addList];
 
     const options = {
-        '!cols': [{ wpx: 100 }, { wpx: 100 }, { wpx: 100 }, { wpx: 100 }]
+        '!cols': isKnowledge ? [{ wpx: 100 }, { wpx: 100 }] : [{ wpx: 100 }, { wpx: 100 }, { wpx: 100 }, { wpx: 100 }]
     };
 
-    const worksheet = XLSX.utils.aoa_to_sheet(excleData);
+    const worksheet = XLSX.utils.aoa_to_sheet(excelData);
     worksheet['!cols'] = options['!cols'];
 
     const workbook = XLSX.utils.book_new();
