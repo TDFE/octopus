@@ -177,7 +177,6 @@ async function combineText({ needAddList, lang, spinner, baiduApiKey, difyApiKey
     }
     const otpConfig = getProjectConfig();
     const { baiduLangMap } = otpConfig || {};
-
     const _difyApiKey = difyApiKey || {};
     if (_difyApiKey.appUrl && _difyApiKey.appKey) {
         spinner.text = `当前配置了dify翻译，预计翻译时间需要${(needAddList.length / 9)?.toFixed(2)}分钟，如果等不及，请先去掉dify翻译配置`;
@@ -204,6 +203,17 @@ async function combineText({ needAddList, lang, spinner, baiduApiKey, difyApiKey
     })
 }
 
+/**
+ * 使用Dify API进行批量翻译
+ * @param {Object} params - 参数对象
+ * @param {Array} params.needAddList - 需要翻译的文本列表，格式为二维数组
+ * @param {Object} params.spinner - 进度显示对象
+ * @param {string} params.appUrl - Dify API地址
+ * @param {string} params.appKey - Dify API密钥
+ * @param {number} [params.maxLength=10] - 最大并发请求数
+ * @returns {Promise} 返回Promise，resolve时返回翻译结果数组
+ * @description 该函数通过并发请求Dify翻译API，并缓存翻译结果，同时更新进度显示
+ */
 function difyTranslate({ needAddList, spinner, appUrl, appKey, maxLength = 10 }) {
     return new Promise((resolve, reject) => {
         const cacheMap = {};
@@ -242,8 +252,9 @@ function difyTranslate({ needAddList, spinner, appUrl, appKey, maxLength = 10 })
                 })
             }).then(res => res.json())
             .then(res => {
-                if (res?.data?.outputs?.result) {
-                    cacheMap[text] = res.data.outputs.result;
+                const back = res?.data?.outputs?.result;
+                if (back && !/[\u4e00-\u9fa5]/.test(back)) {
+                    cacheMap[text] = back;
                 }
                 completedTasks++;
                 spinner.text = `Dify翻译进度: ${completedTasks}/${textList.length}, 当前并发数: ${maxLength}`;
