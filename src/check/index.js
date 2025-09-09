@@ -3,7 +3,7 @@
  * @Author: 郑泳健
  * @Date: 2024-12-12 15:00:24
  * @LastEditors: 郑泳健
- * @LastEditTime: 2025-09-09 16:42:00
+ * @LastEditTime: 2025-09-09 17:09:27
  */
 const path = require('path')
 const fs = require('fs')
@@ -72,14 +72,14 @@ function main() {
             return 
         }
         
-        if (!fs.existsSync(path.resolve(process.cwd(), 'src/.octopus'))) {
+        if (!fs.existsSync(path.resolve(process.cwd(), 'public/.octopus'))) {
             spinner.succeed(`查询完毕，共计丢失${lostKey.length}个，请在lostI18N.js中查看`);
-            spinner.warn('请将原始项目的.octopus复制到当前项目src目录下，会帮你自助将缺失的key补充上去');
+            spinner.warn('请将原始项目的.octopus复制到当前项目public目录下，会帮你自助将缺失的key补充上去');
             return;
         }
-        
-        const zhFrom = syncLang('zh-CN', path.resolve(process.cwd(), 'src/.octopus'))
-        const enFrom = syncLang('en-US', path.resolve(process.cwd(), 'src/.octopus'))
+        spinner.start(`查询完毕，共计丢失${lostKey.length}个,开始同步开始`);
+        const zhFrom = syncLang('zh-CN', path.resolve(process.cwd(), 'public/.octopus'))
+        const enFrom = syncLang('en-US', path.resolve(process.cwd(), 'public/.octopus'))
         const zhFromFlat = flatObject(zhFrom);
         const enFromFlat = flatObject(enFrom);
 
@@ -102,6 +102,7 @@ function main() {
 
         rewriteFiles(getFileKeyValueList(zhCNResult), 'zh-CN');
         rewriteFiles(getFileKeyValueList(enCNResult), 'en-US');
+        spinner.succeed(`同步完成`);
     })()
 }
 
