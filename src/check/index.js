@@ -3,7 +3,7 @@
  * @Author: 郑泳健
  * @Date: 2024-12-12 15:00:24
  * @LastEditors: 郑泳健
- * @LastEditTime: 2025-09-09 15:36:13
+ * @LastEditTime: 2025-09-09 16:42:00
  */
 const path = require('path')
 const fs = require('fs')
@@ -56,8 +56,6 @@ function readJsFiles(folderPath) {
 function main() {
     (async () => {
         const distLang = Array.isArray(CONFIG.distLangs) ? CONFIG.distLangs : []
-
-        // 删除中文下多余的key
         const zhCN = syncLang('zh-CN');
         const zhCNFlat = flatObject(zhCN);
         // 当前项目所有的key
@@ -68,7 +66,42 @@ function main() {
         let result = {}
         const lostKey = totalTranslateList.filter(item => !zhCnKey.includes(item.replace('I18N.', '')))
         fs.writeFileSync(path.resolve(process.cwd(), 'lostI18N.js'), JSON.stringify(lostKey, null, 4), 'utf-8')
-        spinner.succeed(`查询完毕，共计丢失${lostKey.length}个，请在lostI18N.js中查看`)
+       
+        if(!lostKey.length) {
+            spinner.succeed(`查询完毕，无丢失`);
+            return 
+        }
+        
+        if (!fs.existsSync(path.resolve(process.cwd(), 'src/.octopus'))) {
+            spinner.succeed(`查询完毕，共计丢失${lostKey.length}个，请在lostI18N.js中查看`);
+            spinner.warn('请将原始项目的.octopus复制到当前项目src目录下，会帮你自助将缺失的key补充上去');
+            return;
+        }
+        
+        const zhFrom = syncLang('zh-CN', path.resolve(process.cwd(), 'src/.octopus'))
+        const enFrom = syncLang('en-US', path.resolve(process.cwd(), 'src/.octopus'))
+        const zhFromFlat = flatObject(zhFrom);
+        const enFromFlat = flatObject(enFrom);
+
+        const enUS = syncLang('en-US');
+        const enUSFlat = flatObject(enUS);
+
+        const zhCNResult = lostKey.reduce((total, item) => {
+            if(zhFromFlat[item.replace('I18N.', '')]){
+                total[item.replace('I18N.', '')] = zhFromFlat[item.replace('I18N.', '')]
+            }
+            return total;
+        }, zhCNFlat)
+      
+        const enCNResult = lostKey.reduce((total, item) => {
+            if(enFromFlat[item.replace('I18N.', '')]){
+                total[item.replace('I18N.', '')] = enFromFlat[item.replace('I18N.', '')]
+            }
+            return total;
+        }, enUSFlat)
+
+        rewriteFiles(getFileKeyValueList(zhCNResult), 'zh-CN');
+        rewriteFiles(getFileKeyValueList(enCNResult), 'en-US');
     })()
 }
 
