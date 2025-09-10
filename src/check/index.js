@@ -3,7 +3,7 @@
  * @Author: 郑泳健
  * @Date: 2024-12-12 15:00:24
  * @LastEditors: 郑泳健
- * @LastEditTime: 2025-09-09 17:09:27
+ * @LastEditTime: 2025-09-10 20:06:59
  */
 const path = require('path')
 const fs = require('fs')
@@ -12,7 +12,7 @@ const { getSpecifiedFiles, isFile } = require('../utils/file')
 const syncLang = require('../utils/syncLang')
 const { flatObject, rewriteFiles, getFileKeyValueList, getAdjustLangObjAndAddList } = require('../utils/translate');
 const { failInfo, highlightText } = require('../utils/colors');
-const { getProjectConfig } = require('../utils/index')
+const { getProjectConfig, autoImportJSFiles } = require('../utils/index')
 const ora = require('ora');
 
 const CONFIG = getProjectConfig();
@@ -102,6 +102,11 @@ function main() {
 
         rewriteFiles(getFileKeyValueList(zhCNResult), 'zh-CN');
         rewriteFiles(getFileKeyValueList(enCNResult), 'en-US');
+        const cnJSON = fs.readFileSync(path.resolve(process.cwd(), 'public/.octopus/zh-CN/index.js'), 'utf-8');
+        const enJSON = fs.readFileSync(path.resolve(process.cwd(), 'public/.octopus/en-US/index.js'), 'utf-8');
+
+        autoImportJSFiles(path.resolve(process.cwd(), 'public/.octopus/zh-CN'), cnJSON)
+        autoImportJSFiles(path.resolve(process.cwd(), 'public/.octopus/en-US'), enJSON)
         spinner.succeed(`同步完成`);
     })()
 }

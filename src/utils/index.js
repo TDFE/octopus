@@ -270,6 +270,56 @@ function prettierFile(fileContent, proType) {
     }
   }
 
+  function autoImportJSFiles(__dirname, indexContent) {
+    // 1. 提取已有 import 的模块名
+    const importRegex = /import\s+([a-zA-Z0-9_$]+)\s+from\s+'\.\/([^']+)'/g;
+    const existingImports = new Map();
+    let match;
+
+    while ((match = importRegex.exec(indexContent)) !== null) {
+        existingImports.set(match[2], match[1]);
+    }
+
+    // 2. 获取目录下所有 .js 文件（排除 index.js）
+    const allFiles = fs.readdirSync(__dirname)
+    .filter(file => file.endsWith('.js') && file !== 'index.js')
+    .map(file => path.basename(file, '.js'));
+
+    // 3. 找出缺少的
+    const missing = allFiles.filter(file => !existingImports.has(file));
+
+    if (missing.length === 0) {
+    process.exit(0);
+    }
+
+    // 4. 构造 import 和 export 内容
+    let newImports = '';
+    let newExports = '';
+
+    missing.forEach(file => {
+    newImports += `import ${file} from './${file}';\n`;
+    newExports += `    ${file},\n`;
+    });
+
+    // 5. 插入到 index.js
+    // 找到最后一个 import 的位置
+    const lastImportIndex = indexContent.lastIndexOf("import ");
+    const firstExportIndex = indexContent.indexOf("export default");
+
+    const updatedContent =
+    indexContent.slice(0, lastImportIndex) +
+    indexContent.slice(lastImportIndex, firstExportIndex) +
+    '\n' + newImports + '\n' +
+    indexContent.slice(firstExportIndex).replace(
+        /(export default Object\.assign\(\{\},\s*\{[\s\S]*?)(\}\);)/,
+        `$1\n${newExports}$2`
+    );
+
+    // 6. 写回 index.js
+    fs.writeFileSync(indexPath, updatedContent, 'utf-8');
+
+}
+
 module.exports = {
   getOtpDir,
   getLangDir,
@@ -285,5 +335,6 @@ module.exports = {
   lookForFiles,
   translateKeyText,
   spining,
-  prettierFile
+  prettierFile,
+  autoImportJSFiles
 };
