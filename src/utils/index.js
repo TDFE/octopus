@@ -296,7 +296,7 @@ function prettierFile(fileContent, proType) {
     let newImports = '';
     let newExports = '';
 
-    missing.forEach(file => {
+    missing.forEach((file) => {
     newImports += `import ${file} from './${file}';\n`;
     newExports += `    ${file},\n`;
     });
@@ -308,15 +308,14 @@ function prettierFile(fileContent, proType) {
 
     const updatedContent =
     indexContent.slice(0, lastImportIndex) +
-    indexContent.slice(lastImportIndex, firstExportIndex) +
-    '\n' + newImports + '\n' +
+    indexContent.slice(lastImportIndex, firstExportIndex) + newImports + '\n' +
     indexContent.slice(firstExportIndex).replace(
         /(export default Object\.assign\(\{\},\s*\{[\s\S]*?)(\}\);)/,
         `$1\n${newExports}$2`
     );
 
     // 6. 写回 index.js
-    fs.writeFileSync(indexPath, updatedContent, 'utf-8');
+    fs.writeFileSync(path.resolve(__dirname, 'index.js'), updatedContent, 'utf-8');
 
 }
 

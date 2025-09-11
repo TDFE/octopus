@@ -3,7 +3,7 @@
  * @Author: 郑泳健
  * @Date: 2024-12-12 15:00:24
  * @LastEditors: 郑泳健
- * @LastEditTime: 2025-09-10 20:06:59
+ * @LastEditTime: 2025-09-11 09:56:54
  */
 const path = require('path')
 const fs = require('fs')
@@ -102,11 +102,11 @@ function main() {
 
         rewriteFiles(getFileKeyValueList(zhCNResult), 'zh-CN');
         rewriteFiles(getFileKeyValueList(enCNResult), 'en-US');
-        const cnJSON = fs.readFileSync(path.resolve(process.cwd(), 'public/.octopus/zh-CN/index.js'), 'utf-8');
-        const enJSON = fs.readFileSync(path.resolve(process.cwd(), 'public/.octopus/en-US/index.js'), 'utf-8');
+        const cnJSON = fs.readFileSync(path.resolve(process.cwd(), '.octopus/zh-CN/index.js'), 'utf-8');
+        const enJSON = fs.readFileSync(path.resolve(process.cwd(), '.octopus/en-US/index.js'), 'utf-8');
 
-        autoImportJSFiles(path.resolve(process.cwd(), 'public/.octopus/zh-CN'), cnJSON)
-        autoImportJSFiles(path.resolve(process.cwd(), 'public/.octopus/en-US'), enJSON)
+        autoImportJSFiles(path.resolve(process.cwd(), '.octopus/zh-CN'), cnJSON)
+        autoImportJSFiles(path.resolve(process.cwd(), '.octopus/en-US'), enJSON)
         spinner.succeed(`同步完成`);
     })()
 }
