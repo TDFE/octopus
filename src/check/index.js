@@ -3,13 +3,18 @@
  * @Author: 郑泳健
  * @Date: 2024-12-12 15:00:24
  * @LastEditors: 郑泳健
- * @LastEditTime: 2025-10-13 11:40:42
+ * @LastEditTime: 2025-11-11 09:57:48
  */
 const path = require('path');
 const fs = require('fs');
+const { parse } = require('@babel/parser');
+const generate = require('@babel/generator').default;
 const syncLang = require('../utils/syncLang');
 const { flatObject, rewriteFiles, getFileKeyValueList } = require('../utils/translate');
 const { autoImportJSFiles } = require('../utils/index');
+
+const { ESLint } = require('eslint');
+
 const ora = require('ora');
 
 const spinner = ora('开始check');
@@ -39,7 +44,10 @@ function readJsFiles(folderPath) {
             jsContent += readJsFiles(fullPath);
         } else if (path.extname(fullPath) === '.js') {
             // 如果是 .js 文件，读取文件内容
-            const content = fs.readFileSync(fullPath, 'utf-8');
+            let content = fs.readFileSync(fullPath, 'utf-8');
+            const ast = parse(source, { sourceType: 'module', plugins: ['jsx', 'typescript'] });
+            const output = generate(ast, { comments: false });
+            content = output.code;
             jsContent += `\n/* File: ${fullPath} */\n${content}\n`;
         }
     }

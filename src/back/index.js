@@ -3,7 +3,7 @@
  * @Author: 郑泳健
  * @Date: 2022-06-01 13:56:18
  * @LastEditors: 郑泳健
- * @LastEditTime: 2023-01-18 15:25:47
+ * @LastEditTime: 2025-11-11 10:10:55
  */
 const path = require('path')
 const fs = require('fs')
@@ -27,8 +27,6 @@ const TEMPLATE_INNER_REGEX = /I18N\.template\(([\s\S]*?})\)/g
 // 匹配{}之间的内容
 const JSON_KEY_REGEX = /{([\s\S]*?)}/g
 
-// 匹配{}之间的value
-const JSON_VALYR_REGEX = /(?<=: )[^,}]+/g
 
 /**
  * 获取需要back的所有文件目录
@@ -61,14 +59,39 @@ function getFilePaths() {
 /**
  * 获取I18N.template里面{}每个value对应的value
  * @param {*} str {val1: h, val2: m, val3: s}
- * @returns [h, m, s]
+ * @returns obj
  */
 function getTemplateValue(str) {
     try {
-        const values = str.match(JSON_VALYR_REGEX)
-        return values;
+        const result = {};
+        const regex = /(\w+)\s*:\s*/g;
+        let match;
+
+        while ((match = regex.exec(objStr)) !== null) {
+            const key = match[1].trim();
+            let valueStart = regex.lastIndex;
+            let bracketCount = 0;
+            let valueEnd = valueStart;
+
+            for (let i = valueStart; i < objStr.length; i++) {
+                const char = objStr[i];
+                if (char === '(') bracketCount++;
+                if (char === ')') bracketCount--;
+                if ((char === ',' && bracketCount === 0) || (char === '}' && bracketCount === 0)) {
+                    valueEnd = i;
+                    break;
+                }
+            }
+
+            const value = objStr.slice(valueStart, valueEnd).trim();
+            result[key] = value;
+
+            regex.lastIndex = valueEnd + 1; // 继续匹配下一个
+        }
+
+        return result;
     } catch (e) {
-        throw e;
+        throw new Error(`获取I8N.template内的变量出错: ${e.message}`);
     }
 }
 
@@ -89,13 +112,8 @@ function transformTemplate(filePath, code, flatObj) {
                 let matchList = getValueByI18N(filePath, i, flatObj) || [];
                 matchText = matchList[0] && matchList[0]['value']
                 if (matchText) {
-                    matchText = matchText.replace(/{(val\d+)}/g, (match, group, index) => {
-                        if (!keys[0]) {
-                            throw new Error(`${filePath}文件中的 ${highlightText(i)} 转换有问题，请手动检查`)
-                        }
-                        const res = '${' + keys[0].trim() + '}'
-                        keys.splice(0, 1)
-                        return res
+                    matchText = matchText.replace(/{(val\d+)}/g, (_, transKey) => {
+                        return `\${${keys[transKey]}}`;
                     })
 
                     code = code.replace(i, '`' + matchText + '`')
