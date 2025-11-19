@@ -16,5 +16,5 @@ const argv = require('yargs')
     .alias('v', 'version')
     .help()
     .alias('h', 'help')
-    .epilog(`copyright ${year} 同盾`)
+    .epilog(`copyright ${year} 同盾 npm i td-octopus -g`)
     .argv;

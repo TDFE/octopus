@@ -3,7 +3,7 @@
  * @Author: 郑泳健
  * @Date: 2024-12-12 15:00:24
  * @LastEditors: 郑泳健
- * @LastEditTime: 2025-11-11 09:57:48
+ * @LastEditTime: 2025-11-19 15:38:18
  */
 const path = require('path');
 const fs = require('fs');
@@ -45,7 +45,7 @@ function readJsFiles(folderPath) {
         } else if (path.extname(fullPath) === '.js') {
             // 如果是 .js 文件，读取文件内容
             let content = fs.readFileSync(fullPath, 'utf-8');
-            const ast = parse(source, { sourceType: 'module', plugins: ['jsx', 'typescript'] });
+            const ast = parse(content, { sourceType: 'module', plugins: ['jsx', 'typescript'] });
             const output = generate(ast, { comments: false });
             content = output.code;
             jsContent += `\n/* File: ${fullPath} */\n${content}\n`;
