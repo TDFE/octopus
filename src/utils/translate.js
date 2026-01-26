@@ -3,7 +3,7 @@
  * @Author: 郑泳健
  * @Date: 2022-06-02 10:09:01
  * @LastEditors: 郑泳健
- * @LastEditTime: 2023-06-12 11:32:52
+ * @LastEditTime: 2026-01-26 19:15:42
  */
 const fs = require('fs');
 const path = require('path');
@@ -424,6 +424,41 @@ function parseExcel(path, callback, isZhCN = false) {
     }
 }
 
+function parseExcelArr (path, callback, isZhCN) {
+    if (!shell.test('-e', path)) {
+        console.log('当前目录下没有找到翻译.xls文件');
+        return;
+    }
+    const excelBinary = fs.readFileSync(path);
+    const excel = XLSX.read(excelBinary, {
+        type: 'buffer'
+    });
+
+    try {
+        const sheet0 = excel.Sheets[excel.SheetNames[0]];
+        const list = XLSX.utils.sheet_to_json(sheet0);
+
+        const translateMap = list.reduce((total, item) => {
+            const key = item['需要翻译的字段'];
+            let value
+            if (isZhCN) {
+                value = item['中文'];
+            } else {
+                value = item['人工翻译'];
+            }
+            total.push({
+                key,
+                value
+            })
+            return total;
+        }, []);
+
+        callback(translateMap);
+    } catch (e) {
+        console.log(e)
+    }
+}
+
 /**
  * 重写文件
  * @param {*} langFlat
@@ -487,6 +522,7 @@ module.exports = {
     getDistRst,
     generateExcel,
     parseExcel,
+    parseExcelArr,
     rewriteFiles,
     changeFileSuffix,
     getNeedChangeNameFileList
