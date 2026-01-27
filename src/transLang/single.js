@@ -20,7 +20,7 @@ const astNodeToString = (node) => {
     if (t.isMemberExpression(node)) {
         const objectStr = astNodeToString(node.object);
         const propertyStr = astNodeToString(node.property);
-        if(objectStr === 'I18N'){
+        if (objectStr === 'I18N') {
             return propertyStr;
         }
         return `${objectStr}.${propertyStr}`;
@@ -53,44 +53,61 @@ const transformToChinese = (code, globalList) => {
     traverse(ast, {
         VariableDeclarator(path) {
             const { id, init } = path.node;
-            if (t.isIdentifier(id) && t.isCallExpression(init) && t.isIdentifier(init.callee, { name: 'getLanguage' })) {
+            const a = t.isIdentifier(id) && t.isCallExpression(init) && t.isIdentifier(init.callee, { name: 'getLanguage' })
+            const b = t.isIdentifier(id) && t.isCallExpression(init) && t.isIdentifier(init.callee, { name: 'getLang' })
+            if (a || b) {
                 langVariableNames.add(id.name);
             }
         }
     });
 
-    // 第二阶段：处理多语言对象
+    // 第二阶段：处理多语言对象 和 语言索引
     traverse(ast, {
         ObjectExpression(path) {
             const props = path.node.properties;
             if (props.length === 0) return;
 
             const cnProp = props.find(
-                (prop) => t.isObjectProperty(prop) && !prop.computed && isKeyNamed(prop.key,  'cn') && !prop.method
-                
+                (prop) => t.isObjectProperty(prop) && !prop.computed && isKeyNamed(prop.key, 'cn') && !prop.method
             );
 
             const enProp = props.find(
-                (prop) => t.isObjectProperty(prop) && !prop.computed && isKeyNamed(prop.key, 'en') && !prop.method &&  t.isStringLiteral(prop.value)
+                (prop) => t.isObjectProperty(prop) && !prop.computed && isKeyNamed(prop.key, 'en') && !prop.method
             );
-  
-            if (cnProp && enProp) {
-                const cnText = astNodeToString(cnProp.value);
-                localList[cnText] = enProp.value.value
+
+            // 仅当 cn 和 en 都是字符串字面量时，才记录映射
+            if (cnProp && enProp && t.isStringLiteral(cnProp.value) && t.isStringLiteral(enProp.value)) {
+                localList[cnProp.value.value] = enProp.value.value;
             }
 
             if (cnProp) {
-                path.replaceWith(cnProp.value);
+                path.replaceWith(cnProp.value); // 替换 { cn: ..., en: ... } 为 cn 值
             }
         },
 
         MemberExpression(path) {
+            
             const node = path.node;
-            if (t.isMemberExpression(node.object) && t.isIdentifier(node.property) && langVariableNames.has(node.property.name)) {
+            if (!node.computed) return;
+          
+            // 处理 obj[langVar]
+            if (t.isIdentifier(node.property) && langVariableNames.has(node.property.name)) {
                 path.replaceWith(node.object);
+                return;
+            }
+
+            // 处理 obj[getLang()] 或 obj[getLanguage()]
+            if (
+                t.isCallExpression(node.property) &&
+                t.isIdentifier(node.property.callee) &&
+                ['getLang', 'getLanguage'].includes(node.property.callee.name)
+            ) {
+                path.replaceWith(node.object);
+                return;
             }
         },
 
+        // 清理 getLang() 相关的变量声明和导入（保持不变）
         Identifier(path) {
             if (langVariableNames.has(path.node.name)) {
                 const parent = path.parentPath;
@@ -121,7 +138,7 @@ const transformToChinese = (code, globalList) => {
             const specifiers = path.node.specifiers;
             const newSpecifiers = specifiers.filter((spec) => {
                 if (t.isImportSpecifier(spec)) {
-                    return !t.isIdentifier(spec.imported, { name: 'getLanguage' });
+                    return !t.isIdentifier(spec.imported, { name: 'getLanguage' }) && !t.isIdentifier(spec.imported, { name: 'getLang' });
                 }
                 return true;
             });
@@ -141,7 +158,7 @@ const transformToChinese = (code, globalList) => {
     }).code;
 
     // 合并到全局 list
-    
+
     Object.assign(globalList, localList);
     return transformedCode;
 }
@@ -152,7 +169,6 @@ const eslint = new ESLint({
     cwd: process.cwd(),
     useEslintrc: false,
     plugins: {
-        prettier,
         'unused-imports': unusedImports
     },
     baseConfig: {
@@ -164,15 +180,9 @@ const eslint = new ESLint({
         }
     },
     overrideConfig: {
-        env: { browser: true, es2021: true, node: true },
-        extends: ['eslint:recommended'],
-        parserOptions: { ecmaVersion: 2022, sourceType: 'module' },
+        extends: ["tongdun/react"],
+        plugins: ["td-rules-plugin"],
         rules: {
-            'no-unused-vars': ['error', { vars: 'all', args: 'none', caughtErrors: 'none', ignoreRestSiblings: true }],
-            semi: ['error', 'always'],
-            indent: ['error', 4, { SwitchCase: 1 }],
-            quotes: ['error', 'single'],
-            'comma-dangle': ['error', 'never'],
             'prettier/prettier': [
                 1,
                 {
@@ -182,7 +192,7 @@ const eslint = new ESLint({
                     singleQuote: true,
                     tabWidth: 4,
                     trailingComma: 'none',
-                    jsxBracketSameLine: true
+                    jsxBracketSameLine: true,
                 }
             ]
         }
