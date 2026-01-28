@@ -1,6 +1,6 @@
 {
   "name": "td-octopus",
-  "version": "0.2.2",
+  "version": "0.2.3",
   "description": "I18N tool",
   "author": "Anthony Li",
   "bin": {
@@ -16,7 +16,6 @@
     "baidu-translate": "^1.3.0",
     "colors": "^1.4.0",
     "eslint": "^8.15.0",
-    "eslint-config-tongdun": "^1.1.11",
     "eslint-plugin-prettier": "^4.2.1",
     "eslint-plugin-td-rules-plugin": "^1.0.1",
     "eslint-plugin-unused-imports": "^4.3.0",

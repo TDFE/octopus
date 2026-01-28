@@ -1,4 +1,3 @@
-
 const fs = require('fs');
 const path = require('path');
 const parser = require('@babel/parser');
@@ -9,25 +8,7 @@ const { ESLint } = require('eslint');
 const prettier = require('eslint-plugin-prettier');
 const unusedImports = require('eslint-plugin-unused-imports');
 
-// ===== 工具函数 =====
-const astNodeToString = (node) => {
-    if (t.isStringLiteral(node)) {
-        return node.value;
-    }
-    if (t.isIdentifier(node)) {
-        return node.name;
-    }
-    if (t.isMemberExpression(node)) {
-        const objectStr = astNodeToString(node.object);
-        const propertyStr = astNodeToString(node.property);
-        if (objectStr === 'I18N') {
-            return propertyStr;
-        }
-        return `${objectStr}.${propertyStr}`;
-    }
-    return generate(node, { concise: true, comments: false }).code;
-}
-
+// ===== 工具函数：判断 key 是否匹配指定名称 =====
 function isKeyNamed(node, name) {
     if (t.isIdentifier(node)) {
         return node.name === name;
@@ -38,7 +19,85 @@ function isKeyNamed(node, name) {
     return false;
 }
 
-// ===== 单文件转换函数（接受 code 和 filePath）=====
+function extractCnKeyDirect(node) {
+    if (t.isStringLiteral(node)) {
+        return node.value;
+    }
+
+    if (t.isMemberExpression(node)) {
+        let parts = [];
+        let current = node;
+
+        while (t.isMemberExpression(current)) {
+            if (current.computed) return null;
+            const prop = current.property;
+            if (!t.isIdentifier(prop)) return null;
+            parts.unshift(prop.name);
+            current = current.object;
+        }
+
+        if (t.isIdentifier(current) && current.name === 'I18N') {
+            parts.unshift('I18N');
+        } else {
+            return null;
+        }
+
+        if (parts.length === 4) {
+            return parts.join('.');
+        }
+    }
+
+    return null;
+}
+
+// ===== 提取 cn 的 key（仅支持：字符串字面量 或 I18N.a.b.c 四层）=====
+function extractCnKey(node, scope) {
+    // 情况1: 字符串字面量
+    if (t.isStringLiteral(node)) {
+        return node.value;
+    }
+ 
+     // 情况2: Identifier → 查找其定义
+    if (t.isIdentifier(node)) {
+        const binding = scope.getBinding(node.name);
+        
+        if (binding && binding.path.isVariableDeclarator()) {
+            const init = binding.path.node.init;
+           
+            if (init) {
+                // 递归解析初始化表达式（不再传 scope，避免无限递归）
+                return extractCnKeyDirect(init);
+            }
+        }
+        return null;
+    }
+
+    // 情况3: 检查是否为 I18N.a.b.c（必须是四层 MemberExpression，非 computed）
+   return extractCnKeyDirect(node);
+}
+
+function extractEnValue(node, scope) {
+    // 直接是字符串字面量
+    if (t.isStringLiteral(node)) {
+        return node.value;
+    }
+
+    // 是变量（Identifier），尝试回溯
+    if (t.isIdentifier(node)) {
+        const binding = scope.getBinding(node.name);
+        if (binding && binding.path.isVariableDeclarator()) {
+            const init = binding.path.node.init;
+            if (init && t.isStringLiteral(init)) {
+                return init.value;
+            }
+        }
+    }
+
+    // 其他情况（表达式、模板、多变量等）不支持
+    return null;
+}
+
+// ===== 单文件转换函数 =====
 const transformToChinese = (code, globalList) => {
     let localList = {}; // 每个文件独立的 list
 
@@ -49,19 +108,22 @@ const transformToChinese = (code, globalList) => {
 
     const langVariableNames = new Set();
 
-    // 第一阶段：找 getLanguage()
+    // 第一阶段：收集 getLang / getLanguage 的变量名
     traverse(ast, {
         VariableDeclarator(path) {
             const { id, init } = path.node;
-            const a = t.isIdentifier(id) && t.isCallExpression(init) && t.isIdentifier(init.callee, { name: 'getLanguage' })
-            const b = t.isIdentifier(id) && t.isCallExpression(init) && t.isIdentifier(init.callee, { name: 'getLang' })
-            if (a || b) {
+            if (
+                t.isIdentifier(id) &&
+                t.isCallExpression(init) &&
+                t.isIdentifier(init.callee) &&
+                ['getLanguage', 'getLang'].includes(init.callee.name)
+            ) {
                 langVariableNames.add(id.name);
             }
         }
     });
 
-    // 第二阶段：处理多语言对象 和 语言索引
+    // 第二阶段：处理对象和成员表达式
     traverse(ast, {
         ObjectExpression(path) {
             const props = path.node.properties;
@@ -70,53 +132,40 @@ const transformToChinese = (code, globalList) => {
             const cnProp = props.find(
                 (prop) => t.isObjectProperty(prop) && !prop.computed && isKeyNamed(prop.key, 'cn') && !prop.method
             );
-
             const enProp = props.find(
                 (prop) => t.isObjectProperty(prop) && !prop.computed && isKeyNamed(prop.key, 'en') && !prop.method
             );
-
-            // 仅当 cn 和 en 都是字符串字面量时，才记录映射
-            if (cnProp && enProp && t.isStringLiteral(cnProp.value) && t.isStringLiteral(enProp.value)) {
-                localList[cnProp.value.value] = enProp.value.value;
-            }
-
-            if (cnProp) {
-                path.replaceWith(cnProp.value); // 替换 { cn: ..., en: ... } 为 cn 值
-            }
-        },
-
-        MemberExpression(path) {
             
-            const node = path.node;
-            if (!node.computed) return;
-          
-            // 处理 obj[langVar]
-            if (t.isIdentifier(node.property) && langVariableNames.has(node.property.name)) {
-                path.replaceWith(node.object);
-                return;
-            }
-
-            // 处理 obj[getLang()] 或 obj[getLanguage()]
-            if (
-                t.isCallExpression(node.property) &&
-                t.isIdentifier(node.property.callee) &&
-                ['getLang', 'getLanguage'].includes(node.property.callee.name)
-            ) {
-                path.replaceWith(node.object);
-                return;
-            }
-        },
-
-        // 清理 getLang() 相关的变量声明和导入（保持不变）
-        Identifier(path) {
-            if (langVariableNames.has(path.node.name)) {
-                const parent = path.parentPath;
-                if (parent.isExpressionStatement()) {
-                    parent.remove();
+            // 仅当 en 是字符串字面量，且 cn 符合提取规则时，才记录
+            if (cnProp && enProp) {
+                const enStr = extractEnValue(enProp.value, path.scope);
+                const cnKey = extractCnKey(cnProp.value, path.scope);
+                
+                if (cnKey !== null && enStr !== null) {
+                    localList[cnKey] = enStr;
                 }
             }
         },
 
+        MemberExpression(path) {
+            const node = path.node;
+            if (!node.computed) return;
+
+            const isLangAccess =
+                (t.isIdentifier(node.property) && langVariableNames.has(node.property.name)) ||
+                (t.isCallExpression(node.property) &&
+                    t.isIdentifier(node.property.callee) &&
+                    ['getLang', 'getLanguage'].includes(node.property.callee.name));
+
+            if (isLangAccess) {
+                // 替换为 obj['cn']
+                path.replaceWith(
+                    t.memberExpression(node.object, t.stringLiteral('cn'), true)
+                );
+            }
+        },
+
+        // 清理无用的 lang 变量声明
         VariableDeclarator(path) {
             const { id } = path.node;
             if (t.isIdentifier(id) && langVariableNames.has(id.name)) {
@@ -129,16 +178,26 @@ const transformToChinese = (code, globalList) => {
                     }
                 }
             }
+        },
+
+        Identifier(path) {
+            if (langVariableNames.has(path.node.name)) {
+                const parent = path.parentPath;
+                if (parent.isExpressionStatement()) {
+                    parent.remove();
+                }
+            }
         }
     });
 
-    // 第三阶段：清理 getLanguage 导入
+    // 第三阶段：清理 getLang / getLanguage 导入
     traverse(ast, {
         ImportDeclaration(path) {
             const specifiers = path.node.specifiers;
             const newSpecifiers = specifiers.filter((spec) => {
                 if (t.isImportSpecifier(spec)) {
-                    return !t.isIdentifier(spec.imported, { name: 'getLanguage' }) && !t.isIdentifier(spec.imported, { name: 'getLang' });
+                    return !t.isIdentifier(spec.imported, { name: 'getLanguage' }) &&
+                           !t.isIdentifier(spec.imported, { name: 'getLang' });
                 }
                 return true;
             });
@@ -157,17 +216,15 @@ const transformToChinese = (code, globalList) => {
         comments: false
     }).code;
 
-    // 合并到全局 list
-
+    // 合并到全局翻译表
     Object.assign(globalList, localList);
     return transformedCode;
-}
+};
 
-// ===== ESLint 实例（复用）=====
+// ===== ESLint 实例（用于格式化和清理未使用导入）=====
 const eslint = new ESLint({
     fix: true,
     cwd: process.cwd(),
-    useEslintrc: false,
     plugins: {
         'unused-imports': unusedImports
     },
@@ -180,7 +237,6 @@ const eslint = new ESLint({
         }
     },
     overrideConfig: {
-        extends: ["tongdun/react"],
         plugins: ["td-rules-plugin"],
         rules: {
             'prettier/prettier': [
@@ -199,7 +255,7 @@ const eslint = new ESLint({
     }
 });
 
-// ===== 递归读取所有 .js 文件 =====
+// ===== 递归读取所有 .js 文件（排除 index.js）=====
 const getAllJsFiles = (dir) => {
     let results = [];
     const files = fs.readdirSync(dir);
@@ -208,14 +264,13 @@ const getAllJsFiles = (dir) => {
         const fullPath = path.join(dir, file);
         const stat = fs.statSync(fullPath);
         if (stat.isDirectory()) {
-            results = results.concat(getAllJsFiles(fullPath)); // 递归
-        } else if (file.endsWith('.js') && !['index.js'].includes(file)) {
+            results = results.concat(getAllJsFiles(fullPath));
+        } else if (file.endsWith('.js') && file !== 'index.js') {
             results.push(fullPath);
         }
     }
-
     return results;
-}
+};
 
 // ===== 处理单个文件 =====
 const processFile = async (filePath, globalList) => {
@@ -226,9 +281,11 @@ const processFile = async (filePath, globalList) => {
     const finalCode = results[0].output || transformedCode;
 
     fs.writeFileSync(filePath, finalCode, 'utf-8');
-}
+};
 
+// ===== 导出接口 =====
 module.exports = {
     processFile,
-    getAllJsFiles
-}
+    getAllJsFiles,
+    transformToChinese // 便于单元测试
+};
