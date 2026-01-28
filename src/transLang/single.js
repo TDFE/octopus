@@ -142,7 +142,7 @@ const transformToChinese = (code, globalList) => {
                 const cnKey = extractCnKey(cnProp.value, path.scope);
                 
                 if (cnKey !== null && enStr !== null) {
-                    localList[cnKey] = enStr;
+                    localList[cnKey.replace('I18N.', '')] = enStr;
                 }
             }
         },
