@@ -3,7 +3,7 @@
  * @Author: 郑泳健
  * @Date: 2024-12-12 15:00:24
  * @LastEditors: 郑泳健
- * @LastEditTime: 2025-11-19 15:38:18
+ * @LastEditTime: 2026-02-12 10:40:03
  */
 const path = require('path');
 const fs = require('fs');
@@ -45,7 +45,7 @@ function readJsFiles(folderPath) {
         } else if (path.extname(fullPath) === '.js') {
             // 如果是 .js 文件，读取文件内容
             let content = fs.readFileSync(fullPath, 'utf-8');
-            const ast = parse(content, { sourceType: 'module', plugins: ['jsx', 'typescript'] });
+            const ast = parse(content, { sourceType: 'module', plugins: ['decorators-legacy', 'jsx', 'typescript'] });
             const output = generate(ast, { comments: false });
             content = output.code;
             jsContent += `\n/* File: ${fullPath} */\n${content}\n`;
@@ -73,7 +73,7 @@ function main() {
 
         if (!fs.existsSync(path.resolve(__dirname, '../octopus/zh-CN.js'))) {
             spinner.succeed(`查询完毕，共计丢失${lostKey.length}个，请在lostI18N.js中查看`);
-            spinner.warn('请先执行otp storage');
+            spinner.warn('请先执行otp stash');
             return;
         }
         spinner.start(`查询完毕，共计丢失${lostKey.length}个,开始同步开始`);
@@ -105,7 +105,7 @@ function main() {
         autoImportJSFiles(path.resolve(process.cwd(), '.octopus/zh-CN'), cnJSON);
         autoImportJSFiles(path.resolve(process.cwd(), '.octopus/en-US'), enJSON);
         fs.rmSync(path.resolve(__dirname, '../octopus'), { recursive: true, force: true });
-        spinner.succeed('同步完成,如果需要重新check，请先执行otp storage');
+        spinner.succeed('同步完成,如果需要重新check，请先执行otp stash');
     })();
 }
 

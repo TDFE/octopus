@@ -103,7 +103,7 @@ const transformToChinese = (code, globalList) => {
 
     const ast = parser.parse(code, {
         sourceType: 'module',
-        plugins: ['jsx', 'typescript']
+        plugins: ['decorators-legacy', 'jsx', 'typescript']
     });
 
     const langVariableNames = new Set();
