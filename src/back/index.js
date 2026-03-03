@@ -3,7 +3,7 @@
  * @Author: 郑泳健
  * @Date: 2022-06-01 13:56:18
  * @LastEditors: 郑泳健
- * @LastEditTime: 2025-11-11 10:10:55
+ * @LastEditTime: 2026-03-03 14:18:16
  */
 const path = require('path')
 const fs = require('fs')
@@ -63,6 +63,12 @@ function getFilePaths() {
  */
 function getTemplateValue(str) {
     try {
+        if (!str) return {};
+
+        // 移除外层的花括号，获取对象内容
+        const objStr = str.trim().replace(/^{/, '').replace(/}$/, '').trim();
+        if (!objStr) return {};
+
         const result = {};
         const regex = /(\w+)\s*:\s*/g;
         let match;
@@ -77,8 +83,8 @@ function getTemplateValue(str) {
                 const char = objStr[i];
                 if (char === '(') bracketCount++;
                 if (char === ')') bracketCount--;
-                if ((char === ',' && bracketCount === 0) || (char === '}' && bracketCount === 0)) {
-                    valueEnd = i;
+                if ((char === ',' && bracketCount === 0) || i === objStr.length - 1) {
+                    valueEnd = i === objStr.length - 1 ? i + 1 : i;
                     break;
                 }
             }
