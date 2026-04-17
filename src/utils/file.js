@@ -3,6 +3,17 @@
  const _ = require('lodash');
 
 /**
+ * glob 路径匹配，支持 * 通配符
+ */
+function matchGlob(filePath, pattern) {
+  if (!pattern.includes('*')) {
+    return filePath.includes(pattern);
+  }
+  const regex = new RegExp('^' + pattern.replace(/\*/g, '.*') + '$');
+  return regex.test(filePath);
+}
+
+/**
  * 获取文件夹下符合要求的所有文件
  * @function getSpecifiedFiles
  * @param  {string} dir 路径
@@ -18,7 +29,7 @@ function getSpecifiedFiles(dir, exclude = []) {
       return files.concat(getSpecifiedFiles(name, exclude));
     }
 
-    if (isFile && !_.find(exclude, p=>name.includes(p))) {
+    if (isFile && !_.find(exclude, p => matchGlob(name, p))) {
       return files.concat(name);
     }
     return files;
