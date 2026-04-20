@@ -3,7 +3,7 @@
  * @Author: 郑泳健
  * @Date: 2024-12-12 15:00:24
  * @LastEditors: 郑泳健
- * @LastEditTime: 2026-02-12 10:40:03
+ * @LastEditTime: 2026-04-20 15:29:52
  */
 const path = require('path');
 const fs = require('fs');
@@ -11,7 +11,7 @@ const { parse } = require('@babel/parser');
 const generate = require('@babel/generator').default;
 const syncLang = require('../utils/syncLang');
 const { flatObject, rewriteFiles, getFileKeyValueList } = require('../utils/translate');
-const { autoImportJSFiles } = require('../utils/index');
+const { autoImportJSFiles, getProjectConfig } = require('../utils/index');
 
 const { ESLint } = require('eslint');
 
@@ -58,6 +58,8 @@ function readJsFiles(folderPath) {
 // 同步不同的语言包
 function main() {
     (async () => {
+        const config = getProjectConfig();
+        const distLangs = config.distLangs || ['en-US'];
         const zhCN = syncLang('zh-CN');
         const zhCNFlat = flatObject(zhCN);
         const totalText = readJsFiles(path.resolve(process.cwd(), 'src'));
@@ -77,33 +79,31 @@ function main() {
             return;
         }
         spinner.start(`查询完毕，共计丢失${lostKey.length}个,开始同步开始`);
-        const zhFromFlat = JSON.parse(fs.readFileSync(path.resolve(__dirname, '../octopus/zh-CN.js'), 'utf-8'));
-        const enFromFlat = JSON.parse(fs.readFileSync(path.resolve(__dirname, '../octopus/en-US.js'), 'utf-8'));
 
-        const enUS = syncLang('en-US');
-        const enUSFlat = flatObject(enUS);
+        // 所有需要同步的语言，包含 zh-CN 和 distLangs
+        const allLangs = ['zh-CN', ...distLangs];
+        const langDataMap = { 'zh-CN': { data: zhCN, flat: zhCNFlat } };
 
-        const zhCNResult = lostKey.reduce((total, item) => {
-            if (zhFromFlat[item.replace('I18N.', '')]) {
-                total[item.replace('I18N.', '')] = zhFromFlat[item.replace('I18N.', '')];
-            }
-            return total;
-        }, zhCNFlat);
+        // 遍历所有语言进行同步
+        for (const lang of allLangs) {
+            const langFromFlat = JSON.parse(fs.readFileSync(path.resolve(__dirname, `../octopus/${lang}.js`), 'utf-8'));
+            const { data: langData, flat: langFlat } = langDataMap[lang] || (langDataMap[lang] = {
+                data: syncLang(lang),
+                flat: flatObject(syncLang(lang))
+            });
 
-        const enCNResult = lostKey.reduce((total, item) => {
-            if (enFromFlat[item.replace('I18N.', '')]) {
-                total[item.replace('I18N.', '')] = enFromFlat[item.replace('I18N.', '')];
-            }
-            return total;
-        }, enUSFlat);
+            const langResult = lostKey.reduce((total, item) => {
+                if (langFromFlat[item.replace('I18N.', '')]) {
+                    total[item.replace('I18N.', '')] = langFromFlat[item.replace('I18N.', '')];
+                }
+                return total;
+            }, langFlat);
 
-        rewriteFiles(getFileKeyValueList(zhCNResult), 'zh-CN');
-        rewriteFiles(getFileKeyValueList(enCNResult), 'en-US');
-        const cnJSON = fs.readFileSync(path.resolve(process.cwd(), '.octopus/zh-CN/index.js'), 'utf-8');
-        const enJSON = fs.readFileSync(path.resolve(process.cwd(), '.octopus/en-US/index.js'), 'utf-8');
+            rewriteFiles(getFileKeyValueList(langResult), lang);
+            const langJSON = fs.readFileSync(path.resolve(process.cwd(), `.octopus/${lang}/index.js`), 'utf-8');
+            autoImportJSFiles(path.resolve(process.cwd(), `.octopus/${lang}`), langJSON);
+        }
 
-        autoImportJSFiles(path.resolve(process.cwd(), '.octopus/zh-CN'), cnJSON);
-        autoImportJSFiles(path.resolve(process.cwd(), '.octopus/en-US'), enJSON);
         fs.rmSync(path.resolve(__dirname, '../octopus'), { recursive: true, force: true });
         spinner.succeed('同步完成,如果需要重新check，请先执行otp stash');
     })();
