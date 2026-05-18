@@ -319,6 +319,57 @@ function prettierFile(fileContent, proType) {
 
 }
 
+/**
+ * 删除语言目录中不在 fileKeyValueList 的多余文件，并清理 index.js 中的引用
+ * @param {Array} fileKeyValueList - [{fileName, value}]
+ * @param {string} lang - 语言目录名，如 'zh-CN'
+ */
+function removeUnusedLangFiles(fileKeyValueList, lang) {
+    const config = getProjectConfig();
+    const otpPath = path.resolve(process.cwd(), config.otpDir);
+    const langDir = path.join(otpPath, lang);
+    if (!fs.existsSync(langDir)) return;
+
+    const keepFileNames = new Set(fileKeyValueList.map(i => i.fileName));
+    const indexFiles = new Set(['index.js', 'index.jsx', 'index.ts', 'index.tsx']);
+    const filesToDelete = fs.readdirSync(langDir).filter(file => {
+        if (indexFiles.has(file)) return false;
+        return !keepFileNames.has(path.basename(file, path.extname(file)));
+    });
+
+    if (filesToDelete.length === 0) return;
+
+    filesToDelete.forEach(file => {
+        fs.unlinkSync(path.join(langDir, file));
+    });
+
+    const indexPath = path.join(langDir, 'index.js');
+    if (!fs.existsSync(indexPath)) return;
+
+    const indexContent = fs.readFileSync(indexPath, 'utf-8');
+    const deleteBaseNames = new Set(filesToDelete.map(file => path.basename(file, path.extname(file))));
+
+    // 检测 Object.assign 块内的缩进风格
+    const indentMatch = indexContent.match(/export default Object\.assign\(\{\},\s*\{[\r\n]+([ \t]+)\w/);
+    const indent = indentMatch ? indentMatch[1] : '  ';
+
+    // 解析现有 import，过滤掉要删除的
+    const importRegex = /^import (\w+) from '\.\/([^']+)';$/gm;
+    const remaining = [];
+    let match;
+    while ((match = importRegex.exec(indexContent)) !== null) {
+        if (!deleteBaseNames.has(match[1])) {
+            remaining.push({ name: match[1], from: match[2] });
+        }
+    }
+
+    if (remaining.length === 0) return;
+
+    const importLines = remaining.map(i => `import ${i.name} from './${i.from}';`).join('\n');
+    const exportKeys = remaining.map(i => `${indent}${i.name},`).join('\n');
+    fs.writeFileSync(indexPath, `${importLines}\n\nexport default Object.assign({}, {\n${exportKeys}\n});\n`, 'utf-8');
+}
+
 module.exports = {
   getOtpDir,
   getLangDir,
@@ -335,5 +386,6 @@ module.exports = {
   translateKeyText,
   spining,
   prettierFile,
-  autoImportJSFiles
+  autoImportJSFiles,
+  removeUnusedLangFiles
 };

@@ -3,7 +3,7 @@
  * @Author: 郑泳健
  * @Date: 2024-12-12 15:00:24
  * @LastEditors: 郑泳健
- * @LastEditTime: 2024-12-12 15:00:33
+ * @LastEditTime: 2026-05-18 15:01:42
  */
 const path = require('path')
 const fs = require('fs')
@@ -12,7 +12,7 @@ const { getSpecifiedFiles, isFile } = require('../utils/file')
 const syncLang = require('../utils/syncLang')
 const { flatObject, rewriteFiles, getFileKeyValueList, getAdjustLangObjAndAddList } = require('../utils/translate');
 const { failInfo, highlightText } = require('../utils/colors');
-const { getProjectConfig } = require('../utils/index')
+const { getProjectConfig, removeUnusedLangFiles } = require('../utils/index')
 const ora = require('ora');
 
 const CONFIG = getProjectConfig();
@@ -58,8 +58,10 @@ function main() {
                 result[i] = zhCNFlat[i]
             }
         }
-        
-        rewriteFiles(getFileKeyValueList(result), 'zh-CN')
+   
+        const fileKeyValueList = getFileKeyValueList(result);
+        removeUnusedLangFiles(fileKeyValueList, 'zh-CN');
+        rewriteFiles(fileKeyValueList, 'zh-CN')
 
         for (const lang of distLang) {
             const currentLangMap = syncLang(lang);
@@ -67,6 +69,7 @@ function main() {
             spinner.start(`正在清理${lang}下多余的key`)
             // 删除掉多余的key，增加新的key，同时提取没有翻译过的key的列表
             const { fileKeyValueList } = await getAdjustLangObjAndAddList({ lang, langObj: langFlat, zhCNObj: result, spinner });
+            removeUnusedLangFiles(fileKeyValueList, lang);
             spinner.succeed(`已完成清理${lang}下多余的key`)
             // 重写文件
             rewriteFiles(fileKeyValueList, lang);
