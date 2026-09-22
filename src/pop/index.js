@@ -66,6 +66,10 @@ function main() {
         const totalTranslateList = extractThreeLevelI18NKeys(totalText);
         const zhCnKey = Object.keys(zhCNFlat);
         const lostKey = totalTranslateList.filter((item) => !zhCnKey.includes(item.replace('I18N.', '')));
+        const allLangs = ['zh-CN', ...distLangs];
+        const missingStashLangs = allLangs.filter(
+            (lang) => !fs.existsSync(path.resolve(__dirname, `../octopus/${lang}.js`))
+        );
         fs.writeFileSync(path.resolve(process.cwd(), 'lostI18N.js'), JSON.stringify(lostKey, null, 4), 'utf-8');
 
         if (!lostKey.length) {
@@ -73,15 +77,14 @@ function main() {
             return;
         }
 
-        if (!fs.existsSync(path.resolve(__dirname, '../octopus/zh-CN.js'))) {
+        if (missingStashLangs.length) {
             spinner.succeed(`查询完毕，共计丢失${lostKey.length}个，请在lostI18N.js中查看`);
-            spinner.warn('请先执行otp stash');
+            spinner.warn(`缺少 ${missingStashLangs.join('、')} 缓存，请先执行otp stash`);
             return;
         }
         spinner.start(`查询完毕，共计丢失${lostKey.length}个,开始同步开始`);
 
         // 所有需要同步的语言，包含 zh-CN 和 distLangs
-        const allLangs = ['zh-CN', ...distLangs];
         const langDataMap = { 'zh-CN': { data: zhCN, flat: zhCNFlat } };
 
         // 遍历所有语言进行同步
