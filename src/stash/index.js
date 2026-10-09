@@ -17,10 +17,11 @@ const spinner = ora('开始check');
 function main() {
     (async () => {
         const config = getProjectConfig();
-        const distLangs = config.distLangs || ['en-US'];
+        const srcLang = typeof config.srcLang === 'string' && config.srcLang ? config.srcLang : 'zh-CN';
+        const distLangs = Array.isArray(config.distLangs) ? config.distLangs : ['en-US'];
         const outpuDir = path.resolve(__dirname, '../octopus');
         fs.mkdirSync(outpuDir, { recursive: true });
-        const allLangs = ['zh-CN', ...distLangs];
+        const allLangs = [...new Set([srcLang, ...distLangs])];
         spinner.start('开始缓存');
         for (const lang of allLangs) {
             const syncLangData = syncLang(lang);

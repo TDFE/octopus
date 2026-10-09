@@ -55,52 +55,142 @@ function readJsFiles(folderPath) {
     return jsContent;
 }
 
+/**
+ * 找出目标语言包相对源语言包缺失的 key。
+ * @param {Object} sourceFlat 源语言扁平化语言包
+ * @param {Object} targetFlat 目标语言扁平化语言包
+ * @returns {string[]} 目标语言包缺失的 key
+ */
+function getMissingKeys(sourceFlat = {}, targetFlat = {}) {
+    return Object.keys(sourceFlat).filter(
+        (key) => !Object.prototype.hasOwnProperty.call(targetFlat, key)
+    );
+}
+
+/**
+ * 按源语言包顺序合并目标语言包和缓存内容。
+ * @param {Object} sourceFlat 源语言扁平化语言包
+ * @param {Object} targetFlat 目标语言现有的扁平化语言包
+ * @param {Object} stashFlat 目标语言缓存的扁平化语言包
+ * @param {Object} sourceStashFlat 源语言缓存的扁平化语言包，用于保持原始顺序
+ * @param {string[]} extraKeys 源语言包之外、但需要恢复的 key
+ * @returns {Object} 按源语言包顺序排列的合并结果
+ */
+function mergeLanguageFlat(sourceFlat = {}, targetFlat = {}, stashFlat = {}, sourceStashFlat = {}, extraKeys = []) {
+    const result = {};
+    const activeSourceKeys = new Set([...Object.keys(sourceFlat), ...extraKeys]);
+    const sourceKeys = Object.keys(sourceStashFlat).filter((key) => activeSourceKeys.has(key));
+    const sourceKeySet = new Set(sourceKeys);
+
+    [...Object.keys(sourceFlat), ...extraKeys].forEach((key) => {
+        if (!sourceKeySet.has(key)) {
+            sourceKeys.push(key);
+            sourceKeySet.add(key);
+        }
+    });
+
+    sourceKeys.forEach((key) => {
+        if (Object.prototype.hasOwnProperty.call(targetFlat, key)) {
+            result[key] = targetFlat[key];
+        } else if (Object.prototype.hasOwnProperty.call(stashFlat, key)) {
+            result[key] = stashFlat[key];
+        }
+    });
+
+    Object.keys(targetFlat).forEach((key) => {
+        if (!Object.prototype.hasOwnProperty.call(result, key)) {
+            result[key] = targetFlat[key];
+        }
+    });
+    extraKeys.forEach((key) => {
+        if (!Object.prototype.hasOwnProperty.call(result, key)
+            && Object.prototype.hasOwnProperty.call(stashFlat, key)) {
+            result[key] = stashFlat[key];
+        }
+    });
+
+    return result;
+}
+
 // 同步不同的语言包
 function main() {
     (async () => {
         const config = getProjectConfig();
-        const distLangs = config.distLangs || ['en-US'];
-        const zhCN = syncLang('zh-CN');
-        const zhCNFlat = flatObject(zhCN);
+        const srcLang = typeof config.srcLang === 'string' && config.srcLang ? config.srcLang : 'zh-CN';
+        const distLangs = Array.isArray(config.distLangs) ? config.distLangs : ['en-US'];
+        const allLangs = [...new Set([srcLang, ...distLangs])];
+        const srcLangData = syncLang(srcLang);
+        const srcLangFlat = flatObject(srcLangData);
         const totalText = readJsFiles(path.resolve(process.cwd(), 'src'));
         const totalTranslateList = extractThreeLevelI18NKeys(totalText);
-        const zhCnKey = Object.keys(zhCNFlat);
-        const lostKey = totalTranslateList.filter((item) => !zhCnKey.includes(item.replace('I18N.', '')));
-        const allLangs = ['zh-CN', ...distLangs];
+        const srcLangKey = Object.keys(srcLangFlat);
+        const lostKey = totalTranslateList.filter((item) => !srcLangKey.includes(item.replace('I18N.', '')));
+        // lostI18N.js 保留 I18N 前缀；语言包和缓存使用扁平化 key。
+        const lostFlatKeys = lostKey.map((item) => item.replace(/^I18N\./, ''));
+        const langDataMap = { [srcLang]: { flat: srcLangFlat } };
+        const missingKeysByLang = { [srcLang]: lostFlatKeys };
+
+        // distLangs 中的语言以 srcLang 为基准，单独检查自身缺失的 key。
+        distLangs.forEach((lang) => {
+            const data = syncLang(lang);
+            const flat = flatObject(data);
+            langDataMap[lang] = { flat };
+            missingKeysByLang[lang] = [...new Set([...lostFlatKeys, ...getMissingKeys(srcLangFlat, flat)])];
+        });
+
+        const missingKeysCount = Object.values(missingKeysByLang).reduce(
+            (total, keys) => total + keys.length,
+            0
+        );
         const missingStashLangs = allLangs.filter(
             (lang) => !fs.existsSync(path.resolve(__dirname, `../octopus/${lang}.js`))
         );
         fs.writeFileSync(path.resolve(process.cwd(), 'lostI18N.js'), JSON.stringify(lostKey, null, 4), 'utf-8');
 
-        if (!lostKey.length) {
-            spinner.succeed('查询完毕，无丢失');
+        if (!missingKeysCount) {
+            spinner.succeed('查询完毕，各语言包无缺失');
             return;
         }
 
         if (missingStashLangs.length) {
-            spinner.succeed(`查询完毕，共计丢失${lostKey.length}个，请在lostI18N.js中查看`);
+            spinner.succeed(`查询完毕，共计需要同步${missingKeysCount}个 key，请在 lostI18N.js 中查看源码缺失项`);
             spinner.warn(`缺少 ${missingStashLangs.join('、')} 缓存，请先执行otp stash`);
             return;
         }
-        spinner.start(`查询完毕，共计丢失${lostKey.length}个,开始同步开始`);
+        spinner.start(`查询完毕，共计需要同步${missingKeysCount}个 key,开始同步`);
 
-        // 所有需要同步的语言，包含 zh-CN 和 distLangs
-        const langDataMap = { 'zh-CN': { data: zhCN, flat: zhCNFlat } };
+        const unresolvedKeysByLang = {};
+        const sourceStashFlat = JSON.parse(
+            fs.readFileSync(path.resolve(__dirname, `../octopus/${srcLang}.js`), 'utf-8')
+        );
 
         // 遍历所有语言进行同步
         for (const lang of allLangs) {
             const langFromFlat = JSON.parse(fs.readFileSync(path.resolve(__dirname, `../octopus/${lang}.js`), 'utf-8'));
-            const { data: langData, flat: langFlat } = langDataMap[lang] || (langDataMap[lang] = {
-                data: syncLang(lang),
-                flat: flatObject(syncLang(lang))
-            });
+            const { flat: langFlat } = langDataMap[lang];
+            const missingKeys = missingKeysByLang[lang];
+            const restorableKeys = missingKeys.filter((key) =>
+                Object.prototype.hasOwnProperty.call(langFromFlat, key)
+            );
+            const unresolvedKeys = missingKeys.filter(
+                (key) => !Object.prototype.hasOwnProperty.call(langFromFlat, key)
+            );
 
-            const langResult = lostKey.reduce((total, item) => {
-                if (langFromFlat[item.replace('I18N.', '')]) {
-                    total[item.replace('I18N.', '')] = langFromFlat[item.replace('I18N.', '')];
-                }
-                return total;
-            }, langFlat);
+            if (unresolvedKeys.length) {
+                unresolvedKeysByLang[lang] = unresolvedKeys;
+            }
+
+            const langResult = mergeLanguageFlat(
+                srcLangFlat,
+                langFlat,
+                langFromFlat,
+                sourceStashFlat,
+                lostFlatKeys
+            );
+
+            if (!restorableKeys.length) {
+                continue;
+            }
 
             rewriteFiles(getFileKeyValueList(langResult), lang);
             const langJSON = fs.readFileSync(path.resolve(process.cwd(), `.octopus/${lang}/index.js`), 'utf-8');
@@ -109,6 +199,9 @@ function main() {
 
         fs.rmSync(path.resolve(__dirname, '../octopus'), { recursive: true, force: true });
         spinner.succeed('同步完成,如果需要重新check，请先执行otp stash');
+        Object.entries(unresolvedKeysByLang).forEach(([lang, keys]) => {
+            spinner.warn(`${lang} 缓存中不存在 ${keys.length} 个 key，无法自动恢复`);
+        });
     })();
 }
 

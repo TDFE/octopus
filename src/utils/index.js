@@ -289,7 +289,7 @@ function prettierFile(fileContent, proType) {
     const missing = allFiles.filter(file => !existingImports.has(file));
 
     if (missing.length === 0) {
-    process.exit(0);
+        return;
     }
 
     // 4. 构造 import 和 export 内容
