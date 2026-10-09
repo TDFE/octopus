@@ -145,6 +145,9 @@ function main() {
         const missingStashLangs = allLangs.filter(
             (lang) => !fs.existsSync(path.resolve(__dirname, `../octopus/${lang}.js`))
         );
+        const cachedStashLangs = allLangs.filter(
+            (lang) => !missingStashLangs.includes(lang)
+        );
         fs.writeFileSync(path.resolve(process.cwd(), 'lostI18N.js'), JSON.stringify(lostKey, null, 4), 'utf-8');
 
         if (!missingKeysCount) {
@@ -153,11 +156,12 @@ function main() {
         }
 
         if (missingStashLangs.length) {
-            spinner.succeed(`查询完毕，共计需要同步${missingKeysCount}个 key，请在 lostI18N.js 中查看源码缺失项`);
-            spinner.warn(`缺少 ${missingStashLangs.join('、')} 缓存，请先执行otp stash`);
+            spinner.succeed(`查询完毕，srcLang（${srcLang}）缺失 ${lostKey.length} 个 key，各语言共需恢复 ${missingKeysCount} 项`);
+            spinner.warn(`原 stash 已缓存：${cachedStashLangs.join('、') || '无'}；未缓存：${missingStashLangs.join('、')}，无法恢复未缓存语言的原始文案`);
+            spinner.warn('请使用删除前包含全部语言的 stash 重试；现在执行 otp stash 只会缓存当前状态，不能恢复已丢失文案');
             return;
         }
-        spinner.start(`查询完毕，共计需要同步${missingKeysCount}个 key,开始同步`);
+        spinner.start(`查询完毕，srcLang（${srcLang}）缺失 ${lostKey.length} 个 key，各语言共需恢复 ${missingKeysCount} 项，开始同步`);
 
         const unresolvedKeysByLang = {};
         const sourceStashFlat = JSON.parse(
